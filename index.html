@@ -15,17 +15,23 @@
     <canvas id="hud"></canvas>
     <div id="welcome" class="panel">
       <h1>AirBoard</h1>
-      <p>Scrivi nell'aria con indice + pollice. Avvicinali per disegnare, separali per muovere il puntatore.</p>
+      <p>Muovi il cursore con l'indice. I gesti cambiano modalità e la modalità resta attiva: <b>🤏 pinch = Penna</b>, <b>☝️ solo indice = Puntatore</b>, <b>✋ mano aperta = Gomma</b>.</p>
       <button id="start">Avvia fotocamera</button>
-      <small>Funziona meglio con buona luce e la mano interamente visibile.</small>
+      <small>Puoi sempre cambiare modalità anche dai tre pulsanti in basso. Mantieni un gesto per circa mezzo secondo per evitare cambi accidentali.</small>
     </div>
     <div id="status" class="status">Pronto</div>
+    <div id="gestureHint" class="gesture-hint">☝️ Puntatore</div>
     <div class="toolbar">
-      <button id="undo" title="Annulla">↶</button>
-      <button id="clear" title="Cancella tutto">⌫</button>
-      <button id="mirror" title="Specchia">⇆</button>
-      <button id="download" title="Salva PNG">PNG</button>
+      <button id="undo" title="Annulla l'ultimo tratto" aria-label="Annulla l'ultimo tratto">↶ <span>Undo</span></button>
+      <button id="clear" title="Cancella tutta la lavagna" aria-label="Cancella tutta la lavagna">⌫ <span>Tutto</span></button>
+      <button id="mirror" title="Specchia o despecchia la fotocamera" aria-label="Specchia fotocamera">⇆ <span>Specchio</span></button>
+      <button id="download" title="Scarica la lavagna come PNG" aria-label="Scarica PNG">PNG</button>
       <label>Spessore <input id="width" type="range" min="2" max="16" value="6"></label>
+      <div class="mode-switch" role="group" aria-label="Modalità AirBoard">
+        <button class="mode-btn active" data-mode="pointer">☝️ <span>Punta</span></button>
+        <button class="mode-btn" data-mode="pen">✏️ <span>Penna</span></button>
+        <button class="mode-btn" data-mode="eraser">◯ <span>Gomma</span></button>
+      </div>
     </div>
   </main>
   <script type="module" src="./app.js"></script>
