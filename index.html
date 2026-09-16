@@ -10,30 +10,12 @@
 </head>
 <body>
   <main id="stage">
-    <video id="camera" playsinline muted></video>
-    <canvas id="ink"></canvas>
-    <canvas id="hud"></canvas>
-    <div id="welcome" class="panel">
-      <h1>AirBoard</h1>
-      <p>Muovi il cursore con l'indice. I gesti cambiano modalità e la modalità resta attiva: <b>🤏 pinch = Penna</b>, <b>☝️ solo indice = Puntatore</b>, <b>✋ mano aperta = Gomma</b>.</p>
-      <button id="start">Avvia fotocamera</button>
-      <small>Puoi sempre cambiare modalità anche dai tre pulsanti in basso. Mantieni un gesto per circa mezzo secondo per evitare cambi accidentali.</small>
-    </div>
-    <div id="status" class="status">Pronto</div>
-    <div id="gestureHint" class="gesture-hint">☝️ Puntatore</div>
+    <video id="camera" playsinline muted></video><canvas id="ink"></canvas><canvas id="hud"></canvas>
+    <div id="welcome" class="panel"><h1>AirBoard</h1><p><b>Libera</b> usa i gesti per scegliere lo strumento. Oppure blocca <b>Punta</b>, <b>Penna</b> o <b>Gomma</b>: in modalità fissa i gesti non cambiano più strumento.</p><button id="start">Avvia fotocamera</button><small>In Penna: unisci pollice e indice per scrivere; appena inizi ad aprirli AirBoard solleva virtualmente la penna e rifinisce la coda del tratto.</small></div>
+    <div id="status" class="status">Pronto</div><div id="gestureHint" class="gesture-hint">✨ Libera · gesti attivi</div>
     <div class="toolbar">
-      <button id="undo" title="Annulla l'ultimo tratto" aria-label="Annulla l'ultimo tratto">↶ <span>Undo</span></button>
-      <button id="clear" title="Cancella tutta la lavagna" aria-label="Cancella tutta la lavagna">⌫ <span>Tutto</span></button>
-      <button id="mirror" title="Specchia o despecchia la fotocamera" aria-label="Specchia fotocamera">⇆ <span>Specchio</span></button>
-      <button id="download" title="Scarica la lavagna come PNG" aria-label="Scarica PNG">PNG</button>
-      <label>Spessore <input id="width" type="range" min="2" max="16" value="6"></label>
-      <div class="mode-switch" role="group" aria-label="Modalità AirBoard">
-        <button class="mode-btn active" data-mode="pointer">☝️ <span>Punta</span></button>
-        <button class="mode-btn" data-mode="pen">✏️ <span>Penna</span></button>
-        <button class="mode-btn" data-mode="eraser">◯ <span>Gomma</span></button>
-      </div>
+      <div class="utility-switch"><button id="undo" title="Annulla l'ultimo tratto">↶ <span>Undo</span></button><button id="clear" title="Cancella tutta la lavagna">⌫ <span>Tutto</span></button><button id="mirror" title="Specchia fotocamera">⇆ <span>Specchio</span></button><button id="download" title="Scarica PNG">PNG</button><label>Spessore <input id="width" type="range" min="2" max="16" value="6"></label></div>
+      <div class="mode-switch" role="group" aria-label="Modalità AirBoard"><button class="mode-btn active" data-mode="free">✨ <span>Libera</span></button><button class="mode-btn" data-mode="pointer">☝️ <span>Punta</span></button><button class="mode-btn" data-mode="pen">✏️ <span>Penna</span></button><button class="mode-btn" data-mode="eraser">◯ <span>Gomma</span></button></div>
     </div>
-  </main>
-  <script type="module" src="./app.js"></script>
-</body>
-</html>
+  </main><script type="module" src="./app.js"></script>
+</body></html>
