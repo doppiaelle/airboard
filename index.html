@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#070b14" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>AirBoard MVP</title>
+</head>
+<body>
+  <main id="stage">
+    <video id="camera" playsinline muted></video>
+    <canvas id="ink"></canvas>
+    <canvas id="hud"></canvas>
+    <div id="welcome" class="panel">
+      <h1>AirBoard</h1>
+      <p>Scrivi nell'aria con indice + pollice. Avvicinali per disegnare, separali per muovere il puntatore.</p>
+      <button id="start">Avvia fotocamera</button>
+      <small>Funziona meglio con buona luce e la mano interamente visibile.</small>
+    </div>
+    <div id="status" class="status">Pronto</div>
+    <div class="toolbar">
+      <button id="undo" title="Annulla">↶</button>
+      <button id="clear" title="Cancella tutto">⌫</button>
+      <button id="mirror" title="Specchia">⇆</button>
+      <button id="download" title="Salva PNG">PNG</button>
+      <label>Spessore <input id="width" type="range" min="2" max="16" value="6"></label>
+    </div>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
