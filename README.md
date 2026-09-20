@@ -32,6 +32,15 @@ Open `http://localhost:8080`.
 
 GitHub Pages provides HTTPS, which is required for camera access on phones.
 
+### Test a branch before merging
+
+1. Open **Actions → Deploy AirBoard to GitHub Pages**.
+2. Select **Run workflow**.
+3. Choose the branch to test and start the workflow.
+4. Open the URL reported by the deployment job.
+
+GitHub Pages provides one public site per repository, not isolated public PR previews. A manual branch deployment therefore replaces the current Pages content temporarily. To restore production, run the same workflow again with `main`; pushes to `main` also deploy automatically.
+
 ## Mobile
 
 Open the Pages URL in Safari/Chrome, grant camera permission, and keep your hand fully visible. You can add the site to the home screen; a minimal PWA manifest/service worker is included.

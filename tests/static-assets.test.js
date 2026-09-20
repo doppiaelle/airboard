@@ -41,3 +41,13 @@ test("calibration and semantic correction controls ship together", async () => {
   ])
     assert.match(html, new RegExp(`id="${id}"`));
 });
+
+test("Pages workflow supports an explicitly selected preview branch", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/deploy.yml", import.meta.url),
+    "utf8",
+  );
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /github-pages-preview/);
+  assert.match(workflow, /github\.ref_name\s*==\s*'main'/);
+});
