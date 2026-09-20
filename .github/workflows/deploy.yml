@@ -1,4 +1,8 @@
 name: Deploy AirBoard to GitHub Pages
+run-name: >-
+  ${{ github.ref_name == 'main'
+    && 'Deploy production to GitHub Pages'
+    || format('Deploy {0} preview to GitHub Pages', github.ref_name) }}
 on:
   push:
     branches: [main]
@@ -13,7 +17,10 @@ concurrency:
 jobs:
   deploy:
     environment:
-      name: github-pages
+      # The default Pages environment normally accepts only main. A separate,
+      # unprotected environment lets an explicitly selected branch deploy for
+      # manual testing without weakening the production rule.
+      name: ${{ github.ref_name == 'main' && 'github-pages' || 'github-pages-preview' }}
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:

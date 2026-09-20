@@ -17,6 +17,23 @@
       <video id="camera" playsinline muted></video>
       <canvas id="ink"></canvas><canvas id="semantic"></canvas
       ><canvas id="hud"></canvas>
+      <div id="semanticControls" class="semantic-controls"></div>
+      <div id="semanticEditor" class="semantic-editor" hidden>
+        <div class="semantic-editor-head">
+          <span data-i18n="correctInk">Correct ink</span>
+          <button id="semanticEditorClose" aria-label="Close correction">
+            ×
+          </button>
+        </div>
+        <div id="semanticChoices" class="semantic-choices"></div>
+        <button
+          id="semanticDelete"
+          class="semantic-delete"
+          data-i18n="deleteInk"
+        >
+          Delete element
+        </button>
+      </div>
 
       <div id="welcome" class="panel">
         <div class="brand-mark"><span></span><span></span></div>
@@ -46,6 +63,7 @@
         <div class="live-state">
           <i></i><span id="status" aria-live="polite">Ready</span>
         </div>
+        <div id="trackingQuality" class="tracking-quality" hidden></div>
       </div>
 
       <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
@@ -70,6 +88,14 @@
           >
             <span class="lang-en active">EN</span><span class="slash">/</span
             ><span class="lang-it">IT</span>
+          </button>
+          <div class="sidebar-label calibration-label">CALIBRATION</div>
+          <button
+            id="recalibrate"
+            class="sidebar-action"
+            data-i18n="recalibrate"
+          >
+            Recalibrate gestures
           </button>
         </div>
       </aside>
@@ -183,6 +209,39 @@
             </button>
           </div>
         </form>
+      </dialog>
+
+      <dialog
+        id="calibrationCoach"
+        class="calibration-dialog"
+        aria-labelledby="calibrationTitle"
+        aria-describedby="calibrationText"
+      >
+        <div class="calibration-card">
+          <div class="calibration-progress" aria-hidden="true">
+            <i></i><i></i><i></i>
+          </div>
+          <div class="eyebrow" data-i18n="calibrationEyebrow">QUICK SETUP</div>
+          <h2 id="calibrationTitle">Show your hand</h2>
+          <p id="calibrationText">
+            Keep your hand comfortably inside the frame.
+          </p>
+          <div class="calibration-meter" aria-hidden="true"><span></span></div>
+          <div
+            id="calibrationFeedback"
+            class="calibration-feedback"
+            role="status"
+            aria-live="polite"
+          ></div>
+          <div class="calibration-actions">
+            <button id="calibrationSkip" data-i18n="calibrationSkip">
+              Skip
+            </button>
+            <button id="calibrationNext" class="primary" disabled>
+              Continue
+            </button>
+          </div>
+        </div>
       </dialog>
     </main>
     <script type="module" src="./app.js"></script>

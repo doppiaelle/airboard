@@ -3,6 +3,11 @@ import {
   AIRBOARD_AI_CONTRACT_VERSION as CONTRACT_VERSION,
   normalizeCloudRefinement,
 } from "./ai-contract.js";
+import {
+  correctSemanticElement,
+  deleteSemanticElement,
+  semanticChoices,
+} from "./semantic-ink.js";
 
 const QUICK_CLOSE = 480,
   JOIN_CLOSE = 950,
@@ -18,6 +23,7 @@ export function createAIBoard({
   getStrokes,
   setStrokes,
   onState,
+  onElementsChange = () => {},
   requestCloudConsent = async () => true,
 }) {
   let enabled = false,
@@ -323,6 +329,7 @@ export function createAIBoard({
     if (token !== generation || domain !== expectedDomain) return false;
     const best = r?.alternatives?.[0] || r;
     if (merge) {
+      merge.manual = false;
       merge.confirmed = false;
       merge.content = best?.char || merge.content;
       merge.confidence = best?.confidence || merge.confidence;
@@ -450,6 +457,7 @@ export function createAIBoard({
         bounds: e.bounds,
         strokeCount: e.strokeCount,
         revision: e.revision,
+        manual: Boolean(e.manual),
       }));
   }
   async function refineContext(token = generation) {
@@ -465,7 +473,13 @@ export function createAIBoard({
     if (token !== generation) return;
     confirmReady();
     const uncertain = elements
-      .filter((e) => e.type === "glyph" && e.confirmed && e.confidence < SOLID)
+      .filter(
+        (e) =>
+          e.type === "glyph" &&
+          e.confirmed &&
+          !e.manual &&
+          e.confidence < SOLID,
+      )
       .slice(-10);
     if (!uncertain.length) {
       onState("ready");
@@ -534,7 +548,7 @@ export function createAIBoard({
       }
       for (const u of out.units) {
         const e = elements.find((x) => x.id === u.id);
-        if (!e || !e.confirmed) continue;
+        if (!e || !e.confirmed || e.manual) continue;
         e.content = u.content;
         e.confidence = u.confidence;
       }
@@ -613,6 +627,45 @@ export function createAIBoard({
       drawRaw(e);
     }
     ctx.restore();
+    onElementsChange(
+      elements
+        .filter((e) => e.confirmed && e.type !== "space" && e.layout)
+        .map((e) => ({
+          id: e.id,
+          type: e.type,
+          content: e.content || "",
+          confidence: e.confidence ?? 1,
+          manual: Boolean(e.manual),
+          layout: { ...e.layout },
+          choices: e.type === "glyph" ? semanticChoices(e) : [],
+        })),
+    );
+  }
+  function correctElement(id, content) {
+    const next = correctSemanticElement(elements, id, content);
+    if (!next) return false;
+    history.push({
+      strokes: clone(getStrokes()),
+      elements: clone(elements),
+      pendingStart,
+    });
+    elements = next;
+    render();
+    onState("ready");
+    return true;
+  }
+  function deleteElement(id) {
+    const next = deleteSemanticElement(elements, id);
+    if (!next) return false;
+    history.push({
+      strokes: clone(getStrokes()),
+      elements: clone(elements),
+      pendingStart,
+    });
+    elements = next;
+    render();
+    onState("ready");
+    return true;
   }
   function undoSemantic() {
     if (!history.length) return false;
@@ -645,6 +698,8 @@ export function createAIBoard({
     getDomain,
     schedule,
     addSpace,
+    correctElement,
+    deleteElement,
     cancelPending,
     undoSemantic,
     clear,

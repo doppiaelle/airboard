@@ -26,3 +26,28 @@ test("privacy copy and cloud consent controls ship together", async () => {
   for (const id of ["undo", "clear", "aiBoard", "mirror", "download"])
     assert.match(html, new RegExp(`id="${id}"[\\s\\S]{0,240}?aria-label=`));
 });
+
+test("calibration and semantic correction controls ship together", async () => {
+  const html = await readFile(
+    new URL("../index.html", import.meta.url),
+    "utf8",
+  );
+  for (const id of [
+    "calibrationCoach",
+    "recalibrate",
+    "semanticControls",
+    "semanticEditor",
+    "semanticDelete",
+  ])
+    assert.match(html, new RegExp(`id="${id}"`));
+});
+
+test("Pages workflow supports an explicitly selected preview branch", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/deploy.yml", import.meta.url),
+    "utf8",
+  );
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /github-pages-preview/);
+  assert.match(workflow, /github\.ref_name\s*==\s*'main'/);
+});

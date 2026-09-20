@@ -50,6 +50,88 @@ video {
 #hud {
   pointer-events: none;
 }
+.semantic-controls {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+.semantic-hit {
+  position: absolute;
+  pointer-events: auto;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+}
+.semantic-hit:hover,
+.semantic-hit:focus-visible,
+.semantic-hit[data-confidence="low"] {
+  border-color: #9be7ff80;
+  background: #9be7ff0d;
+}
+.semantic-hit[data-confidence="low"]::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #9be7ff;
+}
+.semantic-editor {
+  position: absolute;
+  z-index: 12;
+  width: 210px;
+  padding: 12px;
+  border: 1px solid #ffffff24;
+  border-radius: 16px;
+  background: #111318f2;
+  box-shadow: 0 18px 55px #0009;
+  backdrop-filter: blur(18px);
+}
+.semantic-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #ffffff8f;
+  font-size: 11px;
+}
+.semantic-editor-head button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 20px;
+}
+.semantic-choices {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 10px 0;
+}
+.semantic-choices button {
+  min-height: 38px;
+  border: 1px solid #ffffff1c;
+  border-radius: 9px;
+  background: #ffffff09;
+  color: #fff;
+  font-weight: 700;
+}
+.semantic-choices button.selected {
+  background: #fff;
+  color: #0b0c0f;
+}
+.semantic-delete {
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  border-radius: 9px;
+  background: #ff5b6817;
+  color: #ffabb2;
+  font-size: 11px;
+}
 .glass {
   background: linear-gradient(
     180deg,
@@ -139,6 +221,25 @@ video {
   padding: 8px 11px;
   font-size: 12px;
 }
+.tracking-quality {
+  position: absolute;
+  right: 0;
+  top: 42px;
+  padding: 6px 9px;
+  border: 1px solid #ffffff14;
+  border-radius: 999px;
+  background: #090a0d9c;
+  color: #ffffffa6;
+  font-size: 10px;
+}
+.tracking-quality[data-quality="good"] {
+  color: #8ff0b8;
+}
+.tracking-quality[data-quality="far"],
+.tracking-quality[data-quality="near"],
+.tracking-quality[data-quality="missing"] {
+  color: #ffd495;
+}
 .live-state i {
   width: 6px;
   height: 6px;
@@ -212,6 +313,20 @@ video {
 }
 .language-minimal .slash {
   opacity: 0.3;
+}
+.calibration-label {
+  margin-top: 38px;
+}
+.sidebar-action {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid #ffffff17;
+  border-radius: 12px;
+  background: #ffffff08;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
 }
 .panel {
   position: absolute;
@@ -410,6 +525,96 @@ body:has(.panel:not([hidden])) .tool-dock,
 body:has(.panel:not([hidden])) .ai-state {
   visibility: hidden;
   pointer-events: none;
+}
+.calibration-dialog {
+  width: min(92vw, 460px);
+  padding: 0;
+  border: 1px solid #ffffff24;
+  border-radius: 26px;
+  background: #111318ee;
+  color: #f7f8fa;
+  box-shadow: 0 32px 100px #000a;
+}
+.calibration-dialog::backdrop {
+  background: #0007;
+  backdrop-filter: blur(3px);
+}
+.calibration-card {
+  padding: 30px;
+}
+.calibration-progress {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+.calibration-progress i {
+  width: 28px;
+  height: 3px;
+  border-radius: 3px;
+  background: #ffffff1c;
+}
+.calibration-progress i.active {
+  background: #9be7ff;
+}
+.calibration-card .eyebrow {
+  color: #ffffff70;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+}
+.calibration-card h2 {
+  margin: 8px 0 10px;
+  font-size: 30px;
+  letter-spacing: -0.035em;
+}
+.calibration-card p {
+  min-height: 48px;
+  margin: 0;
+  color: #ffffffa1;
+  line-height: 1.5;
+}
+.calibration-meter {
+  height: 5px;
+  margin-top: 24px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #ffffff12;
+}
+.calibration-meter span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: #9be7ff;
+  transition: width 0.12s;
+}
+.calibration-feedback {
+  min-height: 18px;
+  margin-top: 9px;
+  color: #9be7ff;
+  font-size: 11px;
+}
+.calibration-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 22px;
+}
+.calibration-actions button {
+  min-height: 44px;
+  padding: 0 17px;
+  border: 1px solid #ffffff1f;
+  border-radius: 12px;
+  background: transparent;
+  color: #fff;
+  font-weight: 650;
+}
+.calibration-actions .primary {
+  background: #fff;
+  color: #0b0c0f;
+}
+.calibration-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 @media (max-width: 760px) {
   .topbar {
