@@ -1,6 +1,6 @@
 # AirBoard MVP
 
-Prototype web/mobile: webcam + MediaPipe Hand Landmarker + virtual ink. No backend and no API key required.
+Prototype web/mobile: webcam + MediaPipe Hand Landmarker + virtual ink. Drawing and local recognition do not require an API key. Optional cloud refinement uses the separately deployed Worker in `api/` and asks the user for consent before sending cropped ink.
 
 ## Gestures
 - Move index finger: pointer
@@ -31,12 +31,23 @@ Open the Pages URL in Safari/Chrome, grant camera permission, and keep your hand
 ## Architecture
 `Camera -> MediaPipe Hand Landmarker -> pinch gesture -> stabilized fingertip -> vector strokes -> canvas overlay`
 
-## Important MVP limitation
-This version implements the hard real-time interaction layer, not handwriting-to-text AI yet. The next step should add a small backend endpoint that receives completed stroke groups or a cropped ink image and returns structured recognition (text / LaTeX / shape). Do not put permanent AI API keys in browser JavaScript.
+## Privacy and cloud refinement
+Camera frames are processed on-device. Math/text modes can send cropped handwriting, nearby recognized characters and stroke coordinates to the configured AI Worker after explicit consent. API keys remain in the Worker; never put them in browser JavaScript.
+
+See `api/README.md` for Worker configuration, origin restrictions and production rate limiting.
+
+## Quality checks
+
+```bash
+npm run check
+npm test
+```
 
 ## Suggested next milestones
-- Smart recognition: text + LaTeX + shapes
+- Calibration coach and adaptive gesture thresholds
+- Correctable semantic ink: text + LaTeX + shapes
 - Voice context to improve recognition
+- Session recap and shareable lesson artifacts
 - Board anchoring / perspective and presenter compositing
 - Record/export WebM
 - Desktop virtual camera output for Zoom/Meet/Teams
