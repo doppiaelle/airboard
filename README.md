@@ -4,6 +4,8 @@ Prototype web/mobile: webcam + MediaPipe Hand Landmarker + virtual ink. Drawing 
 
 The first camera session includes a three-step calibration coach. It learns a local pinch/release profile and shows live framing feedback; the profile never leaves the device and can be replaced from the side menu.
 
+Session Mode groups a lesson, meeting or brainstorm into one local timeline. Mark important moments to capture the board (never the camera), then keep the session in the on-device archive or download a standalone HTML report with the final board.
+
 ## Gestures
 
 - Move index finger: pointer
@@ -11,6 +13,7 @@ The first camera session includes a three-step calibration coach. It learns a lo
 - Release pinch: end stroke
 - Toolbar: undo, clear, mirror, PNG
 - AI Board: tap a recognized glyph to choose an alternative or delete it
+- Session Mode: timer, board checkpoints, local archive and shareable report
 
 ## Local test
 
@@ -55,6 +58,8 @@ Camera frames are processed on-device. Math/text modes can send cropped handwrit
 
 See `api/README.md` for Worker configuration, origin restrictions and production rate limiting.
 
+Session titles, goals, checkpoint images and reports are stored in the browser with IndexedDB. They are not uploaded by AirBoard. Clearing the browser's site data removes the local session archive.
+
 ## Quality checks
 
 ```bash
@@ -64,7 +69,7 @@ npm test
 
 ## Suggested next milestones
 
-- Session mode with reusable lesson/meeting presets
+- Reusable session templates and agenda presets
 - Rich semantic ink: LaTeX blocks and editable shapes
 - Voice context to improve recognition
 - Session recap and shareable lesson artifacts

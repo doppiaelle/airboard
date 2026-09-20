@@ -691,6 +691,25 @@ export function createAIBoard({
     pendingStart = 0;
     render();
   }
+  function getSessionSummary() {
+    const confirmed = elements.filter((element) => element.confirmed);
+    return {
+      semanticCount: confirmed.filter((element) => element.type !== "space")
+        .length,
+      drawingCount: confirmed.filter((element) => element.type === "drawing")
+        .length,
+      recognizedText: confirmed
+        .filter(
+          (element) => element.type === "glyph" || element.type === "space",
+        )
+        .map((element) =>
+          element.type === "space" ? " " : element.content || "",
+        )
+        .join("")
+        .replace(/\s+/g, " ")
+        .trim(),
+    };
+  }
   return {
     toggle,
     isEnabled,
@@ -702,6 +721,7 @@ export function createAIBoard({
     deleteElement,
     cancelPending,
     undoSemantic,
+    getSessionSummary,
     clear,
     resize: render,
     render,

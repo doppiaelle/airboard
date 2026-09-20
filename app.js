@@ -9,6 +9,16 @@ import {
   isCalibrationProfile,
   trackingQuality,
 } from "./calibration.js";
+import {
+  addCheckpoint,
+  createSession,
+  finishSession,
+  formatDuration,
+  MAX_CHECKPOINTS,
+  sessionDuration,
+  sessionReportHtml,
+} from "./session-mode.js";
+import { listSessions, saveSession } from "./session-store.js";
 const video = document.querySelector("#camera"),
   ink = document.querySelector("#ink"),
   semantic = document.querySelector("#semantic"),
@@ -51,7 +61,10 @@ let landmarker,
   spaceCooldown = 0,
   eraserCandidateSince = 0,
   eraserCandidateOrigin = null,
-  selectedSemanticId = null;
+  selectedSemanticId = null,
+  activeSession = null,
+  recapSession = null,
+  sessionTimerHandle = null;
 const CALIBRATION_KEY = "airboard-calibration-v1",
   CALIBRATION_SKIP_KEY = "airboard-calibration-skipped-v1";
 let calibrationProfile = loadCalibrationProfile(),
@@ -110,6 +123,38 @@ const I = {
     qualityFar: "Move closer",
     qualityNear: "Move back",
     qualityMissing: "Show your hand",
+    sessionLabel: "SESSION",
+    sessionStart: "Start a session",
+    sessionMark: "Mark moment",
+    sessionEnd: "End",
+    sessionSetupTitle: "Start a focused session",
+    sessionSetupText:
+      "Keep the board, key moments and outcome together in one local report.",
+    sessionType: "Type",
+    sessionLesson: "Lesson",
+    sessionMeeting: "Meeting",
+    sessionBrainstorm: "Brainstorm",
+    sessionTitle: "Title",
+    sessionGoal: "Goal or agenda",
+    sessionBegin: "Begin session",
+    cancel: "Cancel",
+    checkpointTitle: "Mark this moment",
+    checkpointText:
+      "A private snapshot of the board—not the camera—will be added to the report.",
+    checkpointLabel: "Short note",
+    checkpointSave: "Save moment",
+    checkpointDefault: "Key moment",
+    checkpointLimit: "Checkpoint limit reached",
+    sessionComplete: "SESSION COMPLETE",
+    close: "Close",
+    downloadBoard: "Board PNG",
+    downloadReport: "Download report",
+    duration: "Duration",
+    moments: "Moments",
+    boardMarks: "Board marks",
+    recentSessions: "Recent sessions",
+    recentEmpty: "Completed sessions will appear here.",
+    sessionSaved: "Session saved locally",
   },
   it: {
     heroTitle: "Scrivi nello spazio.",
@@ -151,6 +196,38 @@ const I = {
     qualityFar: "Avvicinati",
     qualityNear: "Allontanati",
     qualityMissing: "Mostra la mano",
+    sessionLabel: "SESSIONE",
+    sessionStart: "Avvia una sessione",
+    sessionMark: "Segna momento",
+    sessionEnd: "Termina",
+    sessionSetupTitle: "Avvia una sessione focalizzata",
+    sessionSetupText:
+      "Raccogli lavagna, momenti chiave e risultato in un unico report locale.",
+    sessionType: "Tipo",
+    sessionLesson: "Lezione",
+    sessionMeeting: "Riunione",
+    sessionBrainstorm: "Brainstorming",
+    sessionTitle: "Titolo",
+    sessionGoal: "Obiettivo o agenda",
+    sessionBegin: "Inizia sessione",
+    cancel: "Annulla",
+    checkpointTitle: "Segna questo momento",
+    checkpointText:
+      "Nel report verrà aggiunta un’istantanea privata della lavagna, non della videocamera.",
+    checkpointLabel: "Nota breve",
+    checkpointSave: "Salva momento",
+    checkpointDefault: "Momento chiave",
+    checkpointLimit: "Limite di checkpoint raggiunto",
+    sessionComplete: "SESSIONE COMPLETATA",
+    close: "Chiudi",
+    downloadBoard: "Lavagna PNG",
+    downloadReport: "Scarica report",
+    duration: "Durata",
+    moments: "Momenti",
+    boardMarks: "Segni in lavagna",
+    recentSessions: "Sessioni recenti",
+    recentEmpty: "Le sessioni concluse compariranno qui.",
+    sessionSaved: "Sessione salvata localmente",
   },
 };
 const t = (k) => I[lang][k] || k,
@@ -273,6 +350,7 @@ function applyLanguage() {
     .forEach((e) => e.classList.toggle("active", lang === "it"));
   renderCalibrationStep();
   refreshUI();
+  refreshRecentSessions();
 }
 document.querySelector("#language").onclick = () => {
   lang = lang === "en" ? "it" : "en";
@@ -507,6 +585,263 @@ document.querySelector("#recalibrate").onclick = () => {
   startCalibration(true);
 };
 
+const sessionSetup = document.querySelector("#sessionSetup"),
+  sessionSetupForm = document.querySelector("#sessionSetupForm"),
+  sessionTitleInput = document.querySelector("#sessionTitle"),
+  sessionGoalInput = document.querySelector("#sessionGoal"),
+  sessionTypeInput = document.querySelector("#sessionType"),
+  sessionBar = document.querySelector("#sessionBar"),
+  sessionBarTitle = document.querySelector("#sessionBarTitle"),
+  sessionTimer = document.querySelector("#sessionTimer"),
+  sessionCheckpoint = document.querySelector("#sessionCheckpoint"),
+  checkpointDialog = document.querySelector("#checkpointDialog"),
+  checkpointForm = document.querySelector("#checkpointForm"),
+  checkpointLabelInput = document.querySelector("#checkpointLabel"),
+  sessionRecap = document.querySelector("#sessionRecap"),
+  sessionRecapTitle = document.querySelector("#sessionRecapTitle"),
+  sessionRecapStats = document.querySelector("#sessionRecapStats"),
+  sessionRecapGoal = document.querySelector("#sessionRecapGoal"),
+  sessionRecapCheckpoints = document.querySelector("#sessionRecapCheckpoints"),
+  recentSessions = document.querySelector("#recentSessions");
+
+function updateSessionBar() {
+  if (!activeSession) return;
+  sessionBarTitle.textContent = activeSession.title;
+  sessionTimer.textContent = formatDuration(sessionDuration(activeSession));
+  sessionCheckpoint.textContent = `${t("sessionMark")} · ${activeSession.checkpoints.length}/${MAX_CHECKPOINTS}`;
+}
+
+function currentBoardSummary() {
+  const semanticSummary = ai.getSessionSummary();
+  return {
+    strokeCount: strokes.length + (current?.points?.length > 1 ? 1 : 0),
+    semanticCount: semanticSummary.semanticCount,
+    recognizedText: semanticSummary.recognizedText,
+  };
+}
+
+function settleCurrentStroke() {
+  if (!penDown) return;
+  penDown = false;
+  releaseSince = 0;
+  pinchCloseFrames = 0;
+  spaceArmed = false;
+  commitStroke();
+}
+
+function captureBoard(type = "image/png", quality = 0.92, maxWidth = 1600) {
+  const sourceWidth = semantic.width,
+    sourceHeight = semantic.height,
+    scale = Math.min(1, maxWidth / Math.max(1, sourceWidth)),
+    out = document.createElement("canvas");
+  out.width = Math.max(1, Math.round(sourceWidth * scale));
+  out.height = Math.max(1, Math.round(sourceHeight * scale));
+  const context = out.getContext("2d");
+  context.fillStyle = "#08090c";
+  context.fillRect(0, 0, out.width, out.height);
+  context.drawImage(semantic, 0, 0, out.width, out.height);
+  context.drawImage(ink, 0, 0, out.width, out.height);
+  return out.toDataURL(type, quality);
+}
+
+function downloadData(data, filename) {
+  const link = document.createElement("a");
+  link.href = data;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
+function safeFilename(value) {
+  return (
+    String(value || "airboard")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 60) || "airboard"
+  );
+}
+
+function startSessionTimer() {
+  clearInterval(sessionTimerHandle);
+  updateSessionBar();
+  sessionTimerHandle = setInterval(updateSessionBar, 1000);
+}
+
+function openSessionSetup() {
+  if (!running || activeSession) return;
+  setSidebar(false);
+  sessionSetupForm.reset();
+  sessionTypeInput.value = "lesson";
+  sessionSetup.showModal();
+  sessionTitleInput.focus();
+}
+
+sessionSetupForm.onsubmit = (event) => {
+  event.preventDefault();
+  activeSession = createSession({
+    id: crypto.randomUUID?.() || `session-${Date.now()}`,
+    type: sessionTypeInput.value,
+    title: sessionTitleInput.value,
+    goal: sessionGoalInput.value,
+  });
+  sessionSetup.close();
+  sessionBar.hidden = false;
+  document.querySelector("#sessionStart").disabled = true;
+  startSessionTimer();
+};
+document.querySelector("#sessionStart").onclick = openSessionSetup;
+document.querySelector("#sessionSetupCancel").onclick = () =>
+  sessionSetup.close();
+
+sessionCheckpoint.onclick = () => {
+  if (!activeSession) return;
+  if (activeSession.checkpoints.length >= MAX_CHECKPOINTS) {
+    status.textContent = t("checkpointLimit");
+    return;
+  }
+  checkpointForm.reset();
+  checkpointLabelInput.placeholder = `${t("checkpointDefault")} ${activeSession.checkpoints.length + 1}`;
+  checkpointDialog.showModal();
+  checkpointLabelInput.focus();
+};
+document.querySelector("#checkpointCancel").onclick = () =>
+  checkpointDialog.close();
+checkpointForm.onsubmit = (event) => {
+  event.preventDefault();
+  if (!activeSession) return;
+  settleCurrentStroke();
+  const next = addCheckpoint(activeSession, {
+    id: crypto.randomUUID?.() || `checkpoint-${Date.now()}`,
+    label:
+      checkpointLabelInput.value ||
+      `${t("checkpointDefault")} ${activeSession.checkpoints.length + 1}`,
+    image: captureBoard("image/jpeg", 0.82, 1100),
+    boardSummary: currentBoardSummary(),
+  });
+  if (next) activeSession = next;
+  checkpointDialog.close();
+  updateSessionBar();
+};
+
+document.querySelector("#sessionEnd").onclick = async () => {
+  if (!activeSession) return;
+  settleCurrentStroke();
+  const finished = finishSession(activeSession, {
+    finalBoard: captureBoard("image/png", 0.92, 1600),
+    boardSummary: currentBoardSummary(),
+  });
+  clearInterval(sessionTimerHandle);
+  sessionTimerHandle = null;
+  activeSession = null;
+  sessionBar.hidden = true;
+  document.querySelector("#sessionStart").disabled = false;
+  recapSession = finished;
+  try {
+    await saveSession(finished);
+    status.textContent = t("sessionSaved");
+  } catch (error) {
+    console.warn("Session archive unavailable", error);
+  }
+  renderSessionRecap(finished);
+  refreshRecentSessions();
+};
+
+function addRecapStat(label, value) {
+  const item = document.createElement("div"),
+    term = document.createElement("span"),
+    content = document.createElement("strong");
+  term.textContent = label;
+  content.textContent = value;
+  item.append(term, content);
+  sessionRecapStats.append(item);
+}
+
+function renderSessionRecap(session) {
+  recapSession = session;
+  sessionRecapTitle.textContent = session.title;
+  sessionRecapGoal.textContent = session.goal || "";
+  sessionRecapGoal.hidden = !session.goal;
+  sessionRecapStats.replaceChildren();
+  addRecapStat(t("duration"), formatDuration(sessionDuration(session)));
+  addRecapStat(t("moments"), String(session.checkpoints.length));
+  addRecapStat(
+    t("boardMarks"),
+    String(
+      (session.boardSummary?.strokeCount || 0) +
+        (session.boardSummary?.semanticCount || 0),
+    ),
+  );
+  sessionRecapCheckpoints.replaceChildren();
+  for (const checkpoint of session.checkpoints) {
+    const figure = document.createElement("figure"),
+      image = document.createElement("img"),
+      caption = document.createElement("figcaption");
+    image.src = checkpoint.image;
+    image.alt = "";
+    caption.textContent = checkpoint.label;
+    figure.append(image, caption);
+    sessionRecapCheckpoints.append(figure);
+  }
+  if (!sessionRecap.open) sessionRecap.showModal();
+}
+
+async function refreshRecentSessions() {
+  if (!recentSessions) return;
+  recentSessions.replaceChildren();
+  const heading = document.createElement("div");
+  heading.className = "recent-heading";
+  heading.textContent = t("recentSessions");
+  recentSessions.append(heading);
+  try {
+    const sessions = await listSessions();
+    if (!sessions.length) {
+      const empty = document.createElement("p");
+      empty.textContent = t("recentEmpty");
+      recentSessions.append(empty);
+      return;
+    }
+    for (const session of sessions) {
+      const button = document.createElement("button"),
+        title = document.createElement("strong"),
+        detail = document.createElement("span");
+      title.textContent = session.title;
+      detail.textContent = `${new Date(session.endedAt).toLocaleDateString(lang)} · ${formatDuration(sessionDuration(session))}`;
+      button.append(title, detail);
+      button.onclick = () => {
+        setSidebar(false);
+        renderSessionRecap(session);
+      };
+      recentSessions.append(button);
+    }
+  } catch {
+    const empty = document.createElement("p");
+    empty.textContent = t("recentEmpty");
+    recentSessions.append(empty);
+  }
+}
+
+document.querySelector("#sessionRecapClose").onclick = () =>
+  sessionRecap.close();
+document.querySelector("#sessionBoardDownload").onclick = () => {
+  if (!recapSession?.finalBoard) return;
+  downloadData(
+    recapSession.finalBoard,
+    `${safeFilename(recapSession.title)}-board.png`,
+  );
+};
+document.querySelector("#sessionReportDownload").onclick = () => {
+  if (!recapSession) return;
+  const report = sessionReportHtml(recapSession, lang),
+    url = URL.createObjectURL(new Blob([report], { type: "text/html" }));
+  downloadData(url, `${safeFilename(recapSession.title)}-report.html`);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+};
+
 function resize() {
   const dpr = Math.min(devicePixelRatio || 1, 2),
     r = ink.getBoundingClientRect();
@@ -555,6 +890,7 @@ async function start() {
     status.textContent = "Loading hand tracking…";
     await modelPromise;
     running = true;
+    document.querySelector("#sessionStart").disabled = false;
     refreshUI();
     requestAnimationFrame(loop);
     setTimeout(() => startCalibration(), 350);
@@ -583,16 +919,8 @@ document.querySelector("#mirror").onclick = () => {
   video.style.transform = mirror ? "scaleX(-1)" : "none";
 };
 document.querySelector("#download").onclick = async () => {
-  const out = document.createElement("canvas");
-  out.width = semantic.width;
-  out.height = semantic.height;
-  const c = out.getContext("2d");
-  c.fillStyle = "#08090c";
-  c.fillRect(0, 0, out.width, out.height);
-  c.drawImage(semantic, 0, 0);
-  c.drawImage(ink, 0, 0);
-  const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
-  if (!blob) return;
+  const data = captureBoard(),
+    blob = await fetch(data).then((response) => response.blob());
   const name = `airboard-${new Date().toISOString().replace(/[:.]/g, "-")}.png`;
   if (navigator.share && navigator.canShare) {
     try {
@@ -605,17 +933,7 @@ document.querySelector("#download").onclick = async () => {
       if (e?.name === "AbortError") return;
     }
   }
-  const url = URL.createObjectURL(blob),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    a.remove();
-    URL.revokeObjectURL(url);
-  }, 1500);
+  downloadData(data, name);
 };
 modeButtons.forEach((b) => (b.onclick = () => selectControl(b.dataset.mode)));
 function distance(a, b) {
