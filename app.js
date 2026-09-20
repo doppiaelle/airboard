@@ -3,6 +3,12 @@ import {
   HandLandmarker,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm";
 import { createAIBoard } from "./ai-board.js";
+import {
+  createCalibrationProfile,
+  DEFAULT_CALIBRATION,
+  isCalibrationProfile,
+  trackingQuality,
+} from "./calibration.js";
 const video = document.querySelector("#camera"),
   ink = document.querySelector("#ink"),
   semantic = document.querySelector("#semantic"),
@@ -13,6 +19,10 @@ const video = document.querySelector("#camera"),
   welcome = document.querySelector("#welcome"),
   widthInput = document.querySelector("#width"),
   gestureHint = document.querySelector("#gestureHint"),
+  trackingQualityChip = document.querySelector("#trackingQuality"),
+  semanticControls = document.querySelector("#semanticControls"),
+  semanticEditor = document.querySelector("#semanticEditor"),
+  semanticChoices = document.querySelector("#semanticChoices"),
   modeButtons = [...document.querySelectorAll(".mode-btn")];
 let landmarker,
   running = false,
@@ -40,13 +50,16 @@ let landmarker,
   spaceArmed = false,
   spaceCooldown = 0,
   eraserCandidateSince = 0,
-  eraserCandidateOrigin = null;
+  eraserCandidateOrigin = null,
+  selectedSemanticId = null;
+const CALIBRATION_KEY = "airboard-calibration-v1",
+  CALIBRATION_SKIP_KEY = "airboard-calibration-skipped-v1";
+let calibrationProfile = loadCalibrationProfile(),
+  calibrationSession = null;
 const HOLD_MS = 330,
   ERASER_HOLD_MS = 1400,
   ERASER_HOLD_MOVE = 22,
   ERASER_RADIUS = 32,
-  PINCH_DOWN = 0.43,
-  PINCH_RELEASE_START = 0.54,
   PINCH_RELEASE_HOLD_MS = 85,
   TAIL_ROLLBACK_MS = 75,
   BOARD_ENTER_MS = 115,
@@ -76,6 +89,27 @@ const I = {
       "Only cropped ink and nearby recognized characters will be sent to our AI service. Camera frames and audio are not uploaded.",
     cloudDeny: "Keep it local",
     cloudAllow: "Allow cloud AI",
+    recalibrate: "Recalibrate gestures",
+    calibrationEyebrow: "QUICK SETUP",
+    calibrationSkip: "Skip",
+    correctInk: "Correct ink",
+    deleteInk: "Delete element",
+    calibrationFrameTitle: "Show your hand",
+    calibrationFrameText:
+      "Keep your hand comfortably inside the frame and hold it steady.",
+    calibrationOpenTitle: "Open thumb and index",
+    calibrationOpenText:
+      "Hold them apart naturally. This sets your release gesture.",
+    calibrationPinchTitle: "Pinch to write",
+    calibrationPinchText: "Touch thumb and index as you would while writing.",
+    calibrationReady: "Great — continue when ready.",
+    calibrationCollecting: "Hold that position…",
+    calibrationDone: "Calibration saved",
+    calibrationContinue: "Continue",
+    qualityGood: "Tracking good",
+    qualityFar: "Move closer",
+    qualityNear: "Move back",
+    qualityMissing: "Show your hand",
   },
   it: {
     heroTitle: "Scrivi nello spazio.",
@@ -96,6 +130,27 @@ const I = {
       "Verranno inviati al servizio AI solo la scrittura ritagliata e i caratteri vicini già riconosciuti. Fotogrammi e audio non vengono caricati.",
     cloudDeny: "Mantieni locale",
     cloudAllow: "Consenti AI cloud",
+    recalibrate: "Ricalibra i gesti",
+    calibrationEyebrow: "CONFIGURAZIONE RAPIDA",
+    calibrationSkip: "Salta",
+    correctInk: "Correggi segno",
+    deleteInk: "Elimina elemento",
+    calibrationFrameTitle: "Mostra la mano",
+    calibrationFrameText:
+      "Tieni la mano comodamente nell’inquadratura e resta fermo.",
+    calibrationOpenTitle: "Apri pollice e indice",
+    calibrationOpenText:
+      "Tienili separati in modo naturale. Imposta il gesto di rilascio.",
+    calibrationPinchTitle: "Pizzica per scrivere",
+    calibrationPinchText: "Unisci pollice e indice come faresti mentre scrivi.",
+    calibrationReady: "Ottimo — continua quando vuoi.",
+    calibrationCollecting: "Mantieni la posizione…",
+    calibrationDone: "Calibrazione salvata",
+    calibrationContinue: "Continua",
+    qualityGood: "Tracciamento stabile",
+    qualityFar: "Avvicinati",
+    qualityNear: "Allontanati",
+    qualityMissing: "Mostra la mano",
   },
 };
 const t = (k) => I[lang][k] || k,
@@ -150,6 +205,7 @@ const ai = createAIBoard({
     redraw();
   },
   requestCloudConsent,
+  onElementsChange: syncSemanticControls,
   onState: (s) => {
     aiState.dataset.state = s;
     aiState.textContent = stateLabels[s] || "AI Board";
@@ -187,6 +243,8 @@ document.querySelector("#aiBoard").onclick = (e) => {
   e.currentTarget.classList.toggle("active", on);
   e.currentTarget.setAttribute("aria-pressed", String(on));
   aiState.classList.toggle("show", on);
+  semanticControls.hidden = !on;
+  if (!on) closeSemanticEditor();
   syncDomainAvailability();
 };
 renderDomain();
@@ -213,6 +271,7 @@ function applyLanguage() {
   document
     .querySelectorAll(".lang-it")
     .forEach((e) => e.classList.toggle("active", lang === "it"));
+  renderCalibrationStep();
   refreshUI();
 }
 document.querySelector("#language").onclick = () => {
@@ -230,6 +289,224 @@ const setSidebar = (o) => {
 document.querySelector("#menuToggle").onclick = () => setSidebar(true);
 document.querySelector("#menuClose").onclick = () => setSidebar(false);
 backdrop.onclick = () => setSidebar(false);
+
+function loadCalibrationProfile() {
+  try {
+    const value = JSON.parse(localStorage.getItem(CALIBRATION_KEY));
+    return isCalibrationProfile(value) ? value : DEFAULT_CALIBRATION;
+  } catch {
+    return DEFAULT_CALIBRATION;
+  }
+}
+
+function closeSemanticEditor() {
+  selectedSemanticId = null;
+  semanticEditor.hidden = true;
+}
+
+function openSemanticEditor(element) {
+  selectedSemanticId = element.id;
+  semanticChoices.replaceChildren();
+  for (const choice of element.choices) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = choice.char;
+    button.classList.toggle("selected", choice.char === element.content);
+    button.setAttribute("aria-label", `Use ${choice.char}`);
+    button.onclick = () => {
+      ai.correctElement(element.id, choice.char);
+      closeSemanticEditor();
+    };
+    semanticChoices.append(button);
+  }
+  const left = Math.min(
+    innerWidth - 230,
+    Math.max(12, element.layout.x + element.layout.w / 2 - 105),
+  );
+  const top = Math.min(
+    innerHeight - 150,
+    Math.max(70, element.layout.y + element.layout.h + 8),
+  );
+  semanticEditor.style.left = `${left}px`;
+  semanticEditor.style.top = `${top}px`;
+  semanticEditor.hidden = false;
+  (
+    semanticChoices.querySelector("button") ||
+    document.querySelector("#semanticDelete")
+  ).focus();
+}
+
+function syncSemanticControls(elements) {
+  semanticControls.replaceChildren();
+  for (const element of elements) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "semantic-hit";
+    button.style.left = `${element.layout.x}px`;
+    button.style.top = `${element.layout.y}px`;
+    button.style.width = `${Math.max(32, element.layout.w)}px`;
+    button.style.height = `${element.layout.h}px`;
+    button.dataset.confidence =
+      element.confidence < 0.72 && !element.manual ? "low" : "solid";
+    button.setAttribute(
+      "aria-label",
+      element.type === "glyph"
+        ? `${t("correctInk")}: ${element.content || "?"}`
+        : t("deleteInk"),
+    );
+    button.onclick = () => openSemanticEditor(element);
+    semanticControls.append(button);
+  }
+  if (
+    selectedSemanticId &&
+    !elements.some((element) => element.id === selectedSemanticId)
+  )
+    closeSemanticEditor();
+}
+
+document.querySelector("#semanticEditorClose").onclick = closeSemanticEditor;
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !semanticEditor.hidden) closeSemanticEditor();
+});
+document.querySelector("#semanticDelete").onclick = () => {
+  if (selectedSemanticId) ai.deleteElement(selectedSemanticId);
+  closeSemanticEditor();
+};
+
+const calibrationCoach = document.querySelector("#calibrationCoach"),
+  calibrationTitle = document.querySelector("#calibrationTitle"),
+  calibrationText = document.querySelector("#calibrationText"),
+  calibrationFeedback = document.querySelector("#calibrationFeedback"),
+  calibrationNext = document.querySelector("#calibrationNext"),
+  calibrationMeter = document.querySelector(".calibration-meter span"),
+  calibrationDots = [...document.querySelectorAll(".calibration-progress i")],
+  calibrationSteps = [
+    ["calibrationFrameTitle", "calibrationFrameText"],
+    ["calibrationOpenTitle", "calibrationOpenText"],
+    ["calibrationPinchTitle", "calibrationPinchText"],
+  ];
+
+function renderCalibrationStep() {
+  if (!calibrationSession) return;
+  const step = calibrationSession.step;
+  calibrationTitle.textContent = t(calibrationSteps[step][0]);
+  calibrationText.textContent = t(calibrationSteps[step][1]);
+  calibrationFeedback.textContent = t("calibrationCollecting");
+  calibrationNext.textContent =
+    step === 2 ? t("calibrationDone") : t("calibrationContinue");
+  calibrationNext.disabled = true;
+  calibrationMeter.style.width = "0%";
+  calibrationDots.forEach((dot, index) =>
+    dot.classList.toggle("active", index <= step),
+  );
+}
+
+function startCalibration(force = false) {
+  if (!running || calibrationSession) return;
+  if (!force && localStorage.getItem(CALIBRATION_SKIP_KEY)) return;
+  if (!force) {
+    try {
+      if (
+        isCalibrationProfile(JSON.parse(localStorage.getItem(CALIBRATION_KEY)))
+      )
+        return;
+    } catch {
+      localStorage.removeItem(CALIBRATION_KEY);
+    }
+  }
+  calibrationSession = {
+    step: 0,
+    openRatios: [],
+    pinchRatios: [],
+    handScales: [],
+    jitterSamples: [],
+    lastPoint: null,
+  };
+  renderCalibrationStep();
+  if (!calibrationCoach.open) calibrationCoach.showModal();
+}
+
+function finishCalibration() {
+  calibrationProfile = createCalibrationProfile(calibrationSession);
+  localStorage.setItem(CALIBRATION_KEY, JSON.stringify(calibrationProfile));
+  localStorage.removeItem(CALIBRATION_SKIP_KEY);
+  calibrationSession = null;
+  calibrationCoach.close();
+  refreshUI();
+}
+
+function observeCalibration(lm, point) {
+  const scale = distance(lm[0], lm[9]);
+  updateTrackingQuality(true, scale);
+  if (!calibrationSession) return false;
+  const session = calibrationSession,
+    ratio = pinchRatio(lm),
+    target = 24;
+  if (session.step === 0 && scale > 0.075 && scale < 0.38) {
+    session.handScales.push(scale);
+    if (session.lastPoint)
+      session.jitterSamples.push(distance(session.lastPoint, point));
+    session.lastPoint = point;
+  } else if (session.step === 1 && ratio > 0.48) {
+    session.openRatios.push(ratio);
+  } else if (session.step === 2 && ratio < 0.58) {
+    session.pinchRatios.push(ratio);
+  }
+  const count =
+    session.step === 0
+      ? session.handScales.length
+      : session.step === 1
+        ? session.openRatios.length
+        : session.pinchRatios.length;
+  calibrationMeter.style.width = `${Math.min(100, (count / target) * 100)}%`;
+  const ready = count >= target;
+  calibrationNext.disabled = !ready;
+  calibrationFeedback.textContent = t(
+    ready ? "calibrationReady" : "calibrationCollecting",
+  );
+  return true;
+}
+
+function updateTrackingQuality(visible, scale = 0) {
+  if (!running) return;
+  const quality = trackingQuality(visible, scale, calibrationProfile);
+  trackingQualityChip.hidden = false;
+  trackingQualityChip.dataset.quality = quality;
+  trackingQualityChip.textContent = t(
+    quality === "good"
+      ? "qualityGood"
+      : quality === "far"
+        ? "qualityFar"
+        : quality === "near"
+          ? "qualityNear"
+          : "qualityMissing",
+  );
+}
+
+calibrationNext.onclick = () => {
+  if (!calibrationSession || calibrationNext.disabled) return;
+  if (calibrationSession.step === 2) finishCalibration();
+  else {
+    calibrationSession.step += 1;
+    calibrationSession.lastPoint = null;
+    renderCalibrationStep();
+  }
+};
+document.querySelector("#calibrationSkip").onclick = () => {
+  localStorage.setItem(CALIBRATION_SKIP_KEY, "v1");
+  calibrationSession = null;
+  calibrationCoach.close();
+};
+calibrationCoach.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  document.querySelector("#calibrationSkip").click();
+});
+document.querySelector("#recalibrate").onclick = () => {
+  setSidebar(false);
+  localStorage.removeItem(CALIBRATION_SKIP_KEY);
+  startCalibration(true);
+};
+
 function resize() {
   const dpr = Math.min(devicePixelRatio || 1, 2),
     r = ink.getBoundingClientRect();
@@ -280,6 +557,7 @@ async function start() {
     running = true;
     refreshUI();
     requestAnimationFrame(loop);
+    setTimeout(() => startCalibration(), 350);
   } catch (e) {
     status.textContent = "Camera error";
     btn.disabled = false;
@@ -371,7 +649,14 @@ function fingertip(lm) {
 function ema(p) {
   if (!smooth) smooth = p;
   const jump = distance(smooth, p),
-    a = jump > 18 ? 0.68 : jump > 7 ? 0.52 : 0.34;
+    noiseFactor = Math.max(
+      0.72,
+      Math.min(1, 4 / Math.max(calibrationProfile.jitter || 3, 1)),
+    ),
+    a =
+      jump > 18
+        ? Math.max(0.56, 0.68 * noiseFactor)
+        : (jump > 7 ? 0.52 : 0.34) * noiseFactor;
   return (smooth = {
     x: smooth.x + (p.x - smooth.x) * a,
     y: smooth.y + (p.y - smooth.y) * a,
@@ -464,7 +749,7 @@ function classify(lm) {
       fingerUp(lm, 20, 18),
     ],
     n = fs.filter(Boolean).length;
-  if (r < PINCH_DOWN) return "pen";
+  if (r < calibrationProfile.pinchDown) return "pen";
   if (n >= 3) return "eraser";
   if (indexPointing(lm, true) && n <= 2) return "pointer";
 }
@@ -520,7 +805,8 @@ function updatePen(lm, n, p) {
     pinchHistory.shift();
   if (!penDown) {
     releaseSince = 0;
-    pinchCloseFrames = r < PINCH_DOWN ? pinchCloseFrames + 1 : 0;
+    pinchCloseFrames =
+      r < calibrationProfile.pinchDown ? pinchCloseFrames + 1 : 0;
     if (pinchCloseFrames >= 2) {
       penDown = true;
       current = { points: [], width: +widthInput.value };
@@ -550,7 +836,7 @@ function updatePen(lm, n, p) {
     }
     if (moved >= SPACE_MAX_MOVE || n - penStartedAt >= SPACE_MAX_MS)
       spaceArmed = false;
-    if (r >= PINCH_RELEASE_START) {
+    if (r >= calibrationProfile.pinchRelease) {
       if (!releaseSince) releaseSince = n;
       if (n - releaseSince >= PINCH_RELEASE_HOLD_MS) {
         const cutoff = releaseSince - TAIL_ROLLBACK_MS;
@@ -585,10 +871,19 @@ function eraseAt(p) {
 function updateHand(lm) {
   const n = performance.now();
   lastHandAt = n;
+  const rawPoint = fingertip(lm);
+  if (observeCalibration(lm, rawPoint)) {
+    hctx.clearRect(0, 0, hud.clientWidth, hud.clientHeight);
+    hctx.beginPath();
+    hctx.arc(rawPoint.x, rawPoint.y, 6, 0, Math.PI * 2);
+    hctx.fillStyle = "#9be7ff";
+    hctx.fill();
+    return;
+  }
   const active = updateBoardGate(lm, n);
   if (!active) return;
   const pointing = indexPointing(lm, tool === "pointer"),
-    p = ema(fingertip(lm));
+    p = ema(rawPoint);
   if (controlMode === "free") freeGesture(classify(lm), n, p);
   if (tool === "pen") {
     updatePen(lm, n, p);
@@ -609,6 +904,7 @@ function updateHand(lm) {
 function noHand() {
   const n = performance.now();
   hctx.clearRect(0, 0, hud.clientWidth, hud.clientHeight);
+  updateTrackingQuality(false);
   if (lastHandAt && n - lastHandAt < HAND_DROPOUT_GRACE_MS) return;
   smooth = null;
   boardActive = boardCandidate = false;

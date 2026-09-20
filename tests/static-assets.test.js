@@ -26,3 +26,18 @@ test("privacy copy and cloud consent controls ship together", async () => {
   for (const id of ["undo", "clear", "aiBoard", "mirror", "download"])
     assert.match(html, new RegExp(`id="${id}"[\\s\\S]{0,240}?aria-label=`));
 });
+
+test("calibration and semantic correction controls ship together", async () => {
+  const html = await readFile(
+    new URL("../index.html", import.meta.url),
+    "utf8",
+  );
+  for (const id of [
+    "calibrationCoach",
+    "recalibrate",
+    "semanticControls",
+    "semanticEditor",
+    "semanticDelete",
+  ])
+    assert.match(html, new RegExp(`id="${id}"`));
+});
