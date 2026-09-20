@@ -1,0 +1,12 @@
+{
+  "name": "airboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check app.js && node --check ai-board.js && node --check ai-contract.js && node --check api/openrouter-worker.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

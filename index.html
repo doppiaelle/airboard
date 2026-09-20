@@ -1,1 +1,190 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/><meta name="theme-color" content="#08090c"/><link rel="manifest" href="./manifest.webmanifest"/><link rel="stylesheet" href="./styles.css"/><title>AirBoard</title></head><body><main id="stage"><video id="camera" playsinline muted></video><canvas id="ink"></canvas><canvas id="semantic"></canvas><canvas id="hud"></canvas><div id="welcome" class="panel"><div class="brand-mark"><span></span><span></span></div><div class="eyebrow">AIRBOARD</div><h1 data-i18n="heroTitle">Write in the air.</h1><p data-i18n-html="heroText">Use <b>Free</b> mode for gesture-controlled tools, or lock a tool to stay focused on your lesson.</p><button id="start" class="start-btn"><span data-i18n="start">Start AirBoard</span><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><small data-i18n="privacy">Your camera is processed directly on your device.</small></div><div class="topbar"><button id="menuToggle" class="brand menu-logo" aria-label="Open menu"><div class="brand-mark small"><span></span><span></span></div><span>AirBoard</span></button><div class="live-state"><i></i><span id="status">Ready</span></div></div><div id="sidebarBackdrop" class="sidebar-backdrop"></div><aside id="sidebar" class="sidebar" aria-hidden="true"><div class="sidebar-head"><div class="brand"><div class="brand-mark small"><span></span><span></span></div><span>AirBoard</span></div><button id="menuClose" class="close-btn"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="sidebar-content"><div class="sidebar-label">LANGUAGE</div><button id="language" class="language-minimal"><span class="lang-en active">EN</span><span class="slash">/</span><span class="lang-it">IT</span></button></div></aside><div id="gestureHint" class="gesture-hint">Fixed mode · gesture switching disabled</div><div class="utility-switch glass"><button id="undo" class="icon-btn" title="Undo"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6"/></svg></button><button id="clear" class="icon-btn" title="Clear"><svg viewBox="0 0 24 24"><path d="m4 16 9-9 5 5-7 7H7l-3-3ZM11 19h9"/></svg></button><button id="aiBoard" class="icon-btn ai-btn" title="AI Board"><svg viewBox="0 0 24 24"><path d="M12 3l1.2 4.1L17 9l-3.8 1.9L12 15l-1.2-4.1L7 9l3.8-1.9L12 3ZM18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z"/></svg></button><button id="recognitionDomain" class="icon-btn domain-btn active" data-domain="numbers" title="Recognition: numbers" aria-label="Recognition: numbers"><span class="domain-glyph">123</span></button><span class="divider"></span><button id="mirror" class="icon-btn"><svg viewBox="0 0 24 24"><path d="M8 7 4 11l4 4M4 11h7M16 17l4-4-4-4M20 13h-7"/></svg></button><button id="download" class="icon-btn"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg></button><span class="divider desktop-only"></span><label class="stroke-control"><input id="width" type="range" min="2" max="16" value="6"/></label></div><div id="aiState" class="ai-state">AI Board</div><div class="tool-dock glass"><button class="mode-btn" data-mode="free"><span>Free</span></button><button class="mode-btn active" data-mode="pointer"><span>Pointer</span></button><button class="mode-btn" data-mode="pen"><span>Pen</span></button><button class="mode-btn" data-mode="eraser"><span>Eraser</span></button></div></main><script type="module" src="./app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    />
+    <meta name="theme-color" content="#08090c" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./accessibility.css" />
+    <title>AirBoard</title>
+  </head>
+  <body>
+    <main id="stage">
+      <video id="camera" playsinline muted></video>
+      <canvas id="ink"></canvas><canvas id="semantic"></canvas
+      ><canvas id="hud"></canvas>
+
+      <div id="welcome" class="panel">
+        <div class="brand-mark"><span></span><span></span></div>
+        <div class="eyebrow">AIRBOARD</div>
+        <h1 data-i18n="heroTitle">Write in the air.</h1>
+        <p data-i18n-html="heroText">
+          Use <b>Free</b> mode for gesture-controlled tools, or lock a tool to
+          stay focused on your lesson.
+        </p>
+        <button id="start" class="start-btn">
+          <span data-i18n="start">Start AirBoard</span
+          ><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </button>
+        <small data-i18n="privacy"
+          >Camera frames stay on this device. Cloud AI receives cropped ink only
+          after your consent.</small
+        >
+      </div>
+
+      <div class="topbar">
+        <button id="menuToggle" class="brand menu-logo" aria-label="Open menu">
+          <div class="brand-mark small"><span></span><span></span></div>
+          <span>AirBoard</span>
+        </button>
+        <div class="live-state">
+          <i></i><span id="status" aria-live="polite">Ready</span>
+        </div>
+      </div>
+
+      <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+      <aside id="sidebar" class="sidebar" aria-hidden="true">
+        <div class="sidebar-head">
+          <div class="brand">
+            <div class="brand-mark small"><span></span><span></span></div>
+            <span>AirBoard</span>
+          </div>
+          <button id="menuClose" class="close-btn" aria-label="Close menu">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+        <div class="sidebar-content">
+          <div class="sidebar-label">LANGUAGE</div>
+          <button
+            id="language"
+            class="language-minimal"
+            aria-label="Change language"
+          >
+            <span class="lang-en active">EN</span><span class="slash">/</span
+            ><span class="lang-it">IT</span>
+          </button>
+        </div>
+      </aside>
+
+      <div id="gestureHint" class="gesture-hint">
+        Fixed mode · gesture switching disabled
+      </div>
+      <div class="utility-switch glass">
+        <button id="undo" class="icon-btn" title="Undo" aria-label="Undo">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6" />
+          </svg>
+        </button>
+        <button
+          id="clear"
+          class="icon-btn"
+          title="Clear"
+          aria-label="Clear board"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m4 16 9-9 5 5-7 7H7l-3-3ZM11 19h9" />
+          </svg>
+        </button>
+        <button
+          id="aiBoard"
+          class="icon-btn ai-btn"
+          title="AI Board"
+          aria-label="Toggle AI Board"
+          aria-pressed="false"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 3l1.2 4.1L17 9l-3.8 1.9L12 15l-1.2-4.1L7 9l3.8-1.9L12 3ZM18.5 14l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z"
+            />
+          </svg>
+        </button>
+        <button
+          id="recognitionDomain"
+          class="icon-btn domain-btn active"
+          data-domain="numbers"
+          title="Recognition: numbers"
+          aria-label="Recognition: numbers"
+        >
+          <span class="domain-glyph">123</span>
+        </button>
+        <span class="divider"></span>
+        <button
+          id="mirror"
+          class="icon-btn"
+          title="Mirror camera"
+          aria-label="Mirror camera"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 7 4 11l4 4M4 11h7M16 17l4-4-4-4M20 13h-7" />
+          </svg>
+        </button>
+        <button
+          id="download"
+          class="icon-btn"
+          title="Save board as PNG"
+          aria-label="Save board as PNG"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v12M7 10l5 5 5-5M5 20h14" />
+          </svg>
+        </button>
+        <span class="divider desktop-only"></span>
+        <label class="stroke-control"
+          ><span class="sr-only">Stroke width</span
+          ><input
+            id="width"
+            aria-label="Stroke width"
+            type="range"
+            min="2"
+            max="16"
+            value="6"
+        /></label>
+      </div>
+
+      <div id="aiState" class="ai-state" role="status" aria-live="polite">
+        AI Board
+      </div>
+      <div class="tool-dock glass" role="group" aria-label="Drawing mode">
+        <button class="mode-btn" data-mode="free"><span>Free</span></button>
+        <button class="mode-btn active" data-mode="pointer">
+          <span>Pointer</span>
+        </button>
+        <button class="mode-btn" data-mode="pen"><span>Pen</span></button>
+        <button class="mode-btn" data-mode="eraser"><span>Eraser</span></button>
+      </div>
+
+      <dialog
+        id="cloudConsent"
+        class="consent-dialog"
+        aria-labelledby="cloudConsentTitle"
+        aria-describedby="cloudConsentText"
+      >
+        <form method="dialog">
+          <div class="eyebrow">AIRBOARD AI</div>
+          <h2 id="cloudConsentTitle" data-i18n="cloudTitle">
+            Improve uncertain writing?
+          </h2>
+          <p id="cloudConsentText" data-i18n="cloudText">
+            Only cropped ink and nearby recognized characters will be sent to
+            our AI service. Camera frames and audio are not uploaded.
+          </p>
+          <div class="consent-actions">
+            <button value="deny" data-i18n="cloudDeny">Keep it local</button>
+            <button value="allow" class="primary" data-i18n="cloudAllow">
+              Allow cloud AI
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
