@@ -80,6 +80,16 @@
           </button>
         </div>
         <div class="sidebar-content">
+          <div class="sidebar-label" data-i18n="sessionLabel">SESSION</div>
+          <button
+            id="sessionStart"
+            class="sidebar-action session-start"
+            disabled
+          >
+            <span data-i18n="sessionStart">Start a session</span>
+            <span aria-hidden="true">＋</span>
+          </button>
+          <div id="recentSessions" class="recent-sessions"></div>
           <div class="sidebar-label">LANGUAGE</div>
           <button
             id="language"
@@ -102,6 +112,19 @@
 
       <div id="gestureHint" class="gesture-hint">
         Fixed mode · gesture switching disabled
+      </div>
+      <div id="sessionBar" class="session-bar glass" hidden>
+        <div class="session-live" aria-hidden="true"></div>
+        <div class="session-bar-copy">
+          <strong id="sessionBarTitle">Session</strong>
+          <span id="sessionTimer">00:00</span>
+        </div>
+        <button id="sessionCheckpoint" data-i18n="sessionMark">
+          Mark moment
+        </button>
+        <button id="sessionEnd" class="session-end" data-i18n="sessionEnd">
+          End
+        </button>
       </div>
       <div class="utility-switch glass">
         <button id="undo" class="icon-btn" title="Undo" aria-label="Undo">
@@ -239,6 +262,114 @@
             </button>
             <button id="calibrationNext" class="primary" disabled>
               Continue
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog
+        id="sessionSetup"
+        class="session-dialog"
+        aria-labelledby="sessionSetupTitle"
+      >
+        <form id="sessionSetupForm">
+          <div class="eyebrow">AIRBOARD SESSION</div>
+          <h2 id="sessionSetupTitle" data-i18n="sessionSetupTitle">
+            Start a focused session
+          </h2>
+          <p data-i18n="sessionSetupText">
+            Keep the board, key moments and outcome together in one local
+            report.
+          </p>
+          <label>
+            <span data-i18n="sessionType">Type</span>
+            <select id="sessionType">
+              <option value="lesson" data-i18n="sessionLesson">Lesson</option>
+              <option value="meeting" data-i18n="sessionMeeting">
+                Meeting
+              </option>
+              <option value="brainstorm" data-i18n="sessionBrainstorm">
+                Brainstorm
+              </option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="sessionTitle">Title</span>
+            <input
+              id="sessionTitle"
+              maxlength="100"
+              required
+              autocomplete="off"
+            />
+          </label>
+          <label>
+            <span data-i18n="sessionGoal">Goal or agenda</span>
+            <textarea id="sessionGoal" maxlength="400" rows="3"></textarea>
+          </label>
+          <div class="session-dialog-actions">
+            <button type="button" id="sessionSetupCancel" data-i18n="cancel">
+              Cancel
+            </button>
+            <button type="submit" class="primary" data-i18n="sessionBegin">
+              Begin session
+            </button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog
+        id="checkpointDialog"
+        class="session-dialog checkpoint-dialog"
+        aria-labelledby="checkpointTitle"
+      >
+        <form id="checkpointForm">
+          <div class="eyebrow">AIRBOARD SESSION</div>
+          <h2 id="checkpointTitle" data-i18n="checkpointTitle">
+            Mark this moment
+          </h2>
+          <p data-i18n="checkpointText">
+            A private snapshot of the board—not the camera—will be added to the
+            report.
+          </p>
+          <label>
+            <span data-i18n="checkpointLabel">Short note</span>
+            <input id="checkpointLabel" maxlength="100" autocomplete="off" />
+          </label>
+          <div class="session-dialog-actions">
+            <button type="button" id="checkpointCancel" data-i18n="cancel">
+              Cancel
+            </button>
+            <button type="submit" class="primary" data-i18n="checkpointSave">
+              Save moment
+            </button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog
+        id="sessionRecap"
+        class="session-dialog recap-dialog"
+        aria-labelledby="sessionRecapTitle"
+      >
+        <div class="recap-content">
+          <div class="eyebrow" data-i18n="sessionComplete">
+            SESSION COMPLETE
+          </div>
+          <h2 id="sessionRecapTitle">Session</h2>
+          <div id="sessionRecapStats" class="recap-stats"></div>
+          <p id="sessionRecapGoal" class="recap-goal"></p>
+          <div id="sessionRecapCheckpoints" class="recap-checkpoints"></div>
+          <div class="session-dialog-actions recap-actions">
+            <button id="sessionRecapClose" data-i18n="close">Close</button>
+            <button id="sessionBoardDownload" data-i18n="downloadBoard">
+              Board PNG
+            </button>
+            <button
+              id="sessionReportDownload"
+              class="primary"
+              data-i18n="downloadReport"
+            >
+              Download report
             </button>
           </div>
         </div>

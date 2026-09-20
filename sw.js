@@ -1,4 +1,4 @@
-const CACHE = "airboard-v22";
+const CACHE = "airboard-v23";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,8 @@ const ASSETS = [
   "./ai-contract.js",
   "./calibration.js",
   "./semantic-ink.js",
+  "./session-mode.js",
+  "./session-store.js",
   "./local-recognizer-v2.js",
   "./manifest.webmanifest",
 ];

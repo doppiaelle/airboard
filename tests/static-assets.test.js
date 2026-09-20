@@ -51,3 +51,20 @@ test("Pages workflow supports an explicitly selected preview branch", async () =
   assert.match(workflow, /github-pages-preview/);
   assert.match(workflow, /github\.ref_name\s*==\s*'main'/);
 });
+
+test("Session Mode controls and privacy copy ship together", async () => {
+  const [html, readme] = await Promise.all([
+    readFile(new URL("../index.html", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+  ]);
+  for (const id of [
+    "sessionStart",
+    "sessionBar",
+    "sessionSetup",
+    "checkpointDialog",
+    "sessionRecap",
+  ])
+    assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(readme, /capture the board \(never the camera\)/i);
+  assert.match(readme, /not uploaded by AirBoard/i);
+});
