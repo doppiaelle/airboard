@@ -59,6 +59,7 @@ video {
 .semantic-hit {
   position: absolute;
   pointer-events: auto;
+  touch-action: none;
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
@@ -69,6 +70,23 @@ video {
   border-color: #9be7ff80;
   background: #9be7ff0d;
 }
+.semantic-hit.selected {
+  border-color: #9be7ff;
+  background: #9be7ff12;
+  box-shadow: 0 0 0 1px #9be7ff33, 0 8px 28px #0004;
+}
+.semantic-resize-handle {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: none;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #071116;
+  border-radius: 50%;
+  background: #9be7ff;
+}
+.semantic-hit.selected .semantic-resize-handle { display: block; }
 .semantic-hit[data-confidence="low"]::after {
   content: "";
   position: absolute;
@@ -122,6 +140,37 @@ video {
 .semantic-choices button.selected {
   background: #fff;
   color: #0b0c0f;
+}
+.semantic-manual-edit {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 8px;
+}
+.semantic-manual-edit[hidden] { display: none; }
+.semantic-manual-edit input {
+  min-width: 0;
+  height: 38px;
+  flex: 1;
+  padding: 0 9px;
+  border: 1px solid #ffffff1c;
+  border-radius: 9px;
+  outline: 0;
+  background: #08090c99;
+  color: #fff;
+}
+.semantic-manual-edit button,
+.semantic-restore {
+  min-height: 36px;
+  border: 1px solid #ffffff18;
+  border-radius: 9px;
+  background: #ffffff09;
+  color: #fff;
+  font-size: 11px;
+}
+.semantic-manual-edit button { padding: 0 10px; }
+.semantic-restore {
+  width: 100%;
+  margin-bottom: 7px;
 }
 .semantic-delete {
   width: 100%;
