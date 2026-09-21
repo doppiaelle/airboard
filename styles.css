@@ -851,27 +851,14 @@ gesture-illustration {
 }
 .gesture-hand-art {
   position: absolute;
-  top: 50%;
-  left: 0;
+  inset: 0;
+  display: block;
   width: 100%;
-  aspect-ratio: 3 / 2;
-  background-image: url("./assets/gesture-hands.webp");
-  background-repeat: no-repeat;
-  background-size: 200% 200%;
+  height: 100%;
   filter: drop-shadow(0 8px 14px #0007);
-  transform: translateY(-50%);
-}
-gesture-illustration[data-gesture="pointer"] .gesture-hand-art {
-  background-position: 0 0;
-}
-gesture-illustration[data-gesture="write"] .gesture-hand-art {
-  background-position: 100% 0;
-}
-gesture-illustration[data-gesture="release"] .gesture-hand-art {
-  background-position: 0 100%;
-}
-gesture-illustration[data-gesture="erase"] .gesture-hand-art {
-  background-position: 100% 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
 }
 .gesture-motion-svg {
   position: absolute;

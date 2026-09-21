@@ -39,7 +39,12 @@ class GestureIllustration extends HTMLElement {
     const gesture = MOTION_CUES[requested] ? requested : "pointer";
     this.dataset.gesture = gesture;
     this.innerHTML = `
-      <span class="gesture-hand-art"></span>
+      <img
+        class="gesture-hand-art"
+        src="./assets/gesture-${gesture}.png"
+        alt=""
+        draggable="false"
+      />
       ${MOTION_CUES[gesture]}
     `;
     this.setAttribute("aria-hidden", "true");

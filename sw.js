@@ -1,4 +1,4 @@
-const CACHE = "airboard-v27";
+const CACHE = "airboard-v28";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,7 +9,10 @@ const ASSETS = [
   "./ai-contract.js",
   "./calibration.js",
   "./gesture-illustrations.js",
-  "./assets/gesture-hands.webp",
+  "./assets/gesture-pointer.png",
+  "./assets/gesture-write.png",
+  "./assets/gesture-release.png",
+  "./assets/gesture-erase.png",
   "./semantic-ink.js",
   "./session-mode.js",
   "./session-store.js",
