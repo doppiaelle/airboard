@@ -41,6 +41,7 @@ let landmarker,
   mirror = true,
   lastVideoTime = -1,
   strokes = [],
+  redoStrokes = [],
   current = null,
   smooth = null,
   lastPoint = null,
@@ -393,12 +394,14 @@ function boardPageLabels() {
 boardPagesController = createBoardPagesController({
   getState: () => ({
     strokes: structuredClone(strokes),
+    redoStrokes: structuredClone(redoStrokes),
     aiState: ai.exportState(),
   }),
   setState: (state) => {
     settleCurrentStroke();
     ai.cancelPending();
     strokes = structuredClone(state?.strokes || []);
+    redoStrokes = structuredClone(state?.redoStrokes || []);
     current = null;
     penDown = false;
     closeSemanticEditor();
@@ -406,6 +409,7 @@ boardPagesController = createBoardPagesController({
     recognitionDomain = ai.getDomain();
     renderDomain();
     redraw();
+    refreshHistoryControls();
   },
   capturePreview: () => captureBoard("image/jpeg", 0.68, 360),
   beforePageChange: settleCurrentStroke,
@@ -1039,19 +1043,36 @@ async function start() {
   }
 }
 document.querySelector("#start").onclick = start;
+const undoButton = document.querySelector("#undo"),
+  redoButton = document.querySelector("#redo");
+function refreshHistoryControls() {
+  redoButton.disabled = !redoStrokes.length && !ai.canRedoSemantic();
+}
 document.querySelector("#clear").onclick = () => {
   strokes = [];
+  redoStrokes = [];
   current = null;
   ai.clear();
   redraw();
+  refreshHistoryControls();
 };
-document.querySelector("#undo").onclick = () => {
+undoButton.onclick = () => {
   ai.cancelPending();
   if (strokes.length) {
-    strokes.pop();
+    redoStrokes.push(strokes.pop());
     redraw();
   } else if (!ai.undoSemantic()) redraw();
+  refreshHistoryControls();
 };
+redoButton.onclick = () => {
+  ai.cancelPending();
+  if (redoStrokes.length) {
+    strokes.push(redoStrokes.pop());
+    redraw();
+  } else if (!ai.redoSemantic()) redraw();
+  refreshHistoryControls();
+};
+refreshHistoryControls();
 document.querySelector("#mirror").onclick = () => {
   mirror = !mirror;
   video.style.transform = mirror ? "scaleX(-1)" : "none";
@@ -1162,6 +1183,7 @@ function redraw() {
 }
 function commitStroke() {
   if (current?.points.length > 1) {
+    redoStrokes = [];
     strokes.push(current);
     if (ai.isEnabled()) ai.schedule();
   }

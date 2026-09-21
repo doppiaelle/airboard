@@ -246,7 +246,7 @@ export function createBoardPagesController({
     beforePageChange();
     snapshotCurrent();
     book = selectPage(book, id);
-    expandedId = id;
+    expandedId = null;
     setState(clone(activePage(book).state));
     render();
   }

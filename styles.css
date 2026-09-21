@@ -467,6 +467,11 @@ video {
   background: #fff;
   color: #0b0c0f;
 }
+.icon-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
 .icon-btn svg {
   width: 18px;
   fill: none;
