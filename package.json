@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check app.js && node --check ai-board.js && node --check ai-contract.js && node --check calibration.js && node --check gesture-illustrations.js && node --check semantic-ink.js && node --check session-mode.js && node --check session-store.js && node --check api/openrouter-worker.js",
+    "check": "node --check app.js && node --check ai-board.js && node --check ai-contract.js && node --check board-pages.js && node --check calibration.js && node --check gesture-illustrations.js && node --check semantic-ink.js && node --check session-mode.js && node --check session-store.js && node --check api/openrouter-worker.js",
     "test": "node --test"
   },
   "engines": {
