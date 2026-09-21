@@ -858,6 +858,13 @@ gesture-illustration svg {
   fill: currentColor;
   filter: drop-shadow(0 10px 18px #0007);
 }
+.hand-silhouette {
+  fill: currentColor;
+  stroke: #0c1015;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 10px 18px #0007);
+}
 .hand-detail {
   fill: none;
   stroke: #0c1015;
@@ -871,6 +878,13 @@ gesture-illustration svg {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 18;
+}
+.hand-stroke-outline {
+  fill: none;
+  stroke: #0c1015;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 23;
 }
 .finger-ring,
 .gesture-target {

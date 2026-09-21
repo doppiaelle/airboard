@@ -1,4 +1,4 @@
-const CACHE = "airboard-v25";
+const CACHE = "airboard-v26";
 const ASSETS = [
   "./",
   "./index.html",

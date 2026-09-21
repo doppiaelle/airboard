@@ -2,21 +2,33 @@ const ICONS = {
   pointer: `
     <svg viewBox="0 0 180 140" role="img" focusable="false">
       <g class="gesture-hand gesture-hand-pointer">
-        <path class="hand-fill" d="M68 127c-13-7-21-20-21-35 0-12 6-22 16-28l12-7V23c0-10 7-18 17-18s18 8 18 18v40l7-5c8-6 19-4 25 4 5 7 5 16 0 23l-17 25c-8 12-21 20-36 20H79c-4 0-8-1-11-3Z"/>
-        <path class="hand-fill" d="M67 65c-3-8 1-17 9-20 7-3 15 0 19 6l3 6c1-8 8-14 16-14 9 0 16 7 16 16v17H72l-5-11Z"/>
-        <path class="hand-detail" d="M76 78c15-10 35-12 51-4M76 94h45M77 109h34M92 62V25"/>
+        <path class="hand-silhouette" d="M58 77c8-14 22-22 39-22h17c10 0 18 8 18 18 9 0 16 7 16 16 0 7-3 13-7 19l-10 13c-6 8-16 13-27 13H82c-18 0-33-15-33-33 0-10 3-18 9-24Z"/>
+        <path class="hand-stroke-outline" d="M88 76V24"/>
+        <path class="hand-stroke pointer-index" d="M88 76V24"/>
+        <path class="hand-stroke-outline" d="M101 69c10-8 24-5 29 5M106 84h29M104 99h27"/>
+        <path class="hand-stroke curled-fingers" d="M101 69c10-8 24-5 29 5M106 84h29M104 99h27"/>
+        <path class="hand-stroke-outline" d="M61 78c4 15 17 26 34 28"/>
+        <path class="hand-stroke pointer-thumb" d="M61 78c4 15 17 26 34 28"/>
+        <path class="hand-detail" d="M73 116c12 5 28 5 41 0M97 57v19"/>
       </g>
-      <circle class="gesture-target" cx="92" cy="8" r="7"/>
-      <path class="motion-line pointer-motion" d="M48 21h20M58 13l10 8-10 8"/>
+      <circle class="gesture-target" cx="88" cy="8" r="7"/>
+      <path class="motion-line pointer-motion" d="M45 22h20M55 14l10 8-10 8"/>
     </svg>`,
   write: `
     <svg viewBox="0 0 180 140" role="img" focusable="false">
       <g class="gesture-hand gesture-hand-write">
-        <path class="hand-fill" d="M91 41c15-16 41-17 57-3 12 11 19 27 18 43-1 26-22 47-48 48h-12c-17 0-30-12-30-28 0-9 4-17 11-22 7-6 10-13 8-22l-4-16Z"/>
-        <path class="hand-stroke grip-index" d="M144 54c-18-14-39-13-55 0L58 78"/>
-        <path class="hand-stroke grip-thumb" d="M146 98c-21 13-43 9-59-6L58 78"/>
-        <path class="hand-stroke grip-fingers" d="M148 70c-16-7-31-3-43 9M148 84c-15-2-27 3-36 15"/>
-        <path class="hand-detail" d="M103 111c12 3 25 0 34-8M103 47c10 0 19 4 27 10"/>
+        <path class="hand-silhouette" d="M104 39c13-9 31-7 43 4 14 13 21 34 17 53-5 21-23 35-45 35h-13c-17 0-29-11-29-26 0-9 5-17 13-22 9-6 13-15 12-26l2-18Z"/>
+        <g class="grip-index">
+          <path class="hand-stroke-outline" d="M145 55c-17-15-39-16-56-3L58 78"/>
+          <path class="hand-stroke" d="M145 55c-17-15-39-16-56-3L58 78"/>
+        </g>
+        <g class="grip-thumb">
+          <path class="hand-stroke-outline" d="M146 101c-21 12-43 8-59-7L58 78"/>
+          <path class="hand-stroke" d="M146 101c-21 12-43 8-59-7L58 78"/>
+        </g>
+        <path class="hand-stroke-outline" d="M150 72c-16-8-32-5-44 7M150 87c-14-3-27 2-37 14"/>
+        <path class="hand-stroke grip-fingers" d="M150 72c-16-8-32-5-44 7M150 87c-14-3-27 2-37 14"/>
+        <path class="hand-detail" d="M104 113c12 3 25 0 34-8M108 46c10-1 20 3 28 10M113 82c9-4 19-4 28-1"/>
       </g>
       <circle class="finger-ring ring-index" cx="58" cy="78" r="8"/>
       <circle class="finger-ring ring-thumb" cx="58" cy="78" r="8"/>
@@ -25,11 +37,18 @@ const ICONS = {
   release: `
     <svg viewBox="0 0 180 140" role="img" focusable="false">
       <g class="gesture-hand gesture-hand-release">
-        <path class="hand-fill" d="M91 41c15-16 41-17 57-3 12 11 19 27 18 43-1 26-22 47-48 48h-12c-17 0-30-12-30-28 0-9 4-17 11-22 7-6 10-13 8-22l-4-16Z"/>
-        <path class="hand-stroke release-grip-index" d="M144 54c-18-14-39-13-55 0L50 67"/>
-        <path class="hand-stroke release-grip-thumb" d="M146 98c-21 13-43 9-59-6L64 97"/>
-        <path class="hand-stroke grip-fingers" d="M148 70c-16-7-31-3-43 9M148 84c-15-2-27 3-36 15"/>
-        <path class="hand-detail" d="M103 111c12 3 25 0 34-8M103 47c10 0 19 4 27 10"/>
+        <path class="hand-silhouette" d="M104 39c13-9 31-7 43 4 14 13 21 34 17 53-5 21-23 35-45 35h-13c-17 0-29-11-29-26 0-9 5-17 13-22 9-6 13-15 12-26l2-18Z"/>
+        <g class="release-grip-index">
+          <path class="hand-stroke-outline" d="M145 55c-17-15-39-16-56-3L50 67"/>
+          <path class="hand-stroke" d="M145 55c-17-15-39-16-56-3L50 67"/>
+        </g>
+        <g class="release-grip-thumb">
+          <path class="hand-stroke-outline" d="M146 101c-21 12-43 8-59-7L64 97"/>
+          <path class="hand-stroke" d="M146 101c-21 12-43 8-59-7L64 97"/>
+        </g>
+        <path class="hand-stroke-outline" d="M150 72c-16-8-32-5-44 7M150 87c-14-3-27 2-37 14"/>
+        <path class="hand-stroke grip-fingers" d="M150 72c-16-8-32-5-44 7M150 87c-14-3-27 2-37 14"/>
+        <path class="hand-detail" d="M104 113c12 3 25 0 34-8M108 46c10-1 20 3 28 10M113 82c9-4 19-4 28-1"/>
       </g>
       <circle class="finger-ring release-index" cx="50" cy="67" r="8"/>
       <circle class="finger-ring release-thumb" cx="64" cy="97" r="8"/>
