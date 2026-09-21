@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   MAX_BOARD_PAGES,
   activePage,
@@ -40,4 +41,18 @@ test("board page count is capped", () => {
   let book = createBoardBook({});
   for (let i = 1; i < MAX_BOARD_PAGES + 4; i++) book = addPage(book, {});
   assert.equal(book.pages.length, MAX_BOARD_PAGES);
+});
+
+test("Board Pages UI is a vertical edge dock with an inward action flyout", async () => {
+  const [script, styles] = await Promise.all([
+    readFile(new URL("../board-pages.js", import.meta.url), "utf8"),
+    readFile(new URL("../board-pages.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(script, /board-pages-edge/);
+  assert.match(script, /board-page-flyout/);
+  assert.match(script, /block:\s*"center"/);
+  assert.match(styles, /right:\s*max\(0px,\s*env\(safe-area-inset-right\)\)/);
+  assert.match(styles, /flex-direction:\s*column/);
+  assert.match(styles, /overflow-y:\s*auto/);
+  assert.match(styles, /right:\s*calc\(100% \+ 10px\)/);
 });
