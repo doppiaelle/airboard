@@ -27,6 +27,7 @@ export function createSession({
     checkpoints: [],
     finalBoard: null,
     boardSummary: null,
+    boardPages: [],
   };
 }
 
@@ -58,7 +59,7 @@ export function addCheckpoint(
 
 export function finishSession(
   session,
-  { endedAt = new Date().toISOString(), finalBoard, boardSummary } = {},
+  { endedAt = new Date().toISOString(), finalBoard, boardSummary, boardPages = [] } = {},
 ) {
   if (!session || session.endedAt) return null;
   return {
@@ -66,6 +67,7 @@ export function finishSession(
     endedAt,
     finalBoard: validImage(finalBoard) ? finalBoard : null,
     boardSummary: normalizeBoardSummary(boardSummary),
+    boardPages: normalizeBoardPages(boardPages),
   };
 }
 
@@ -96,6 +98,7 @@ export function sessionReportHtml(session, locale = "en") {
         duration: "Durata",
         checkpoints: "Checkpoint",
         final: "Lavagna finale",
+        pages: "Pagine lavagna",
         recognized: "Testo riconosciuto",
         empty: "Nessun checkpoint registrato.",
       }
@@ -105,6 +108,7 @@ export function sessionReportHtml(session, locale = "en") {
         duration: "Duration",
         checkpoints: "Checkpoints",
         final: "Final board",
+        pages: "Board pages",
         recognized: "Recognized text",
         empty: "No checkpoints recorded.",
       };
@@ -119,15 +123,32 @@ export function sessionReportHtml(session, locale = "en") {
         .join("")
     : `<p>${labels.empty}</p>`;
   const recognized = clean(session.boardSummary?.recognizedText, 500);
+  const pageHtml = (session.boardPages || []).length
+    ? `<section><h2>${labels.pages}</h2>${session.boardPages
+        .map(
+          (page, index) => `<article><div><strong>${escapeHtml(page.title || `Page ${index + 1}`)}</strong></div>${validImage(page.image) ? `<img src="${page.image}" alt="${escapeHtml(page.title || `Page ${index + 1}`)}">` : ""}</article>`,
+        )
+        .join("")}</section>`
+    : "";
   return `<!doctype html>
 <html lang="${it ? "it" : "en"}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(session.title)} · AirBoard</title><style>
 body{margin:0;background:#0b0c0f;color:#f5f7fa;font:16px/1.55 system-ui,sans-serif}main{max-width:920px;margin:auto;padding:48px 24px 80px}header{border-bottom:1px solid #ffffff20;padding-bottom:28px;margin-bottom:32px}.eyebrow{color:#8edff7;font-size:12px;letter-spacing:.16em;text-transform:uppercase}h1{font-size:clamp(34px,7vw,64px);line-height:1;margin:10px 0 18px}dl{display:flex;gap:30px;flex-wrap:wrap}dt{color:#ffffff80;font-size:12px}dd{margin:2px 0 0}section{margin-top:38px}h2{font-size:20px}article{margin:18px 0 28px}article div{display:flex;justify-content:space-between;gap:12px;margin-bottom:9px}time{color:#ffffff80}img{display:block;width:100%;border:1px solid #ffffff20;border-radius:16px;background:#08090c}.text{padding:18px;border-radius:14px;background:#ffffff0a;white-space:pre-wrap}@media print{body{background:#fff;color:#111}main{padding:20px}article{break-inside:avoid}}
 </style></head><body><main><header><div class="eyebrow">${labels.report}</div><h1>${escapeHtml(session.title)}</h1><dl><div><dt>${labels.duration}</dt><dd>${formatDuration(sessionDuration(session))}</dd></div><div><dt>${labels.goal}</dt><dd>${escapeHtml(session.goal || "—")}</dd></div></dl></header>
 <section><h2>${labels.checkpoints}</h2>${checkpointHtml}</section>
+${pageHtml}
 ${recognized ? `<section><h2>${labels.recognized}</h2><div class="text">${escapeHtml(recognized)}</div></section>` : ""}
 ${validImage(session.finalBoard) ? `<section><h2>${labels.final}</h2><img src="${session.finalBoard}" alt="${labels.final}"></section>` : ""}
 </main></body></html>`;
+}
+
+function normalizeBoardPages(value) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 12).map((page, index) => ({
+    id: clean(page?.id || `page-${index + 1}`, 100),
+    title: clean(page?.title, 48) || `Page ${index + 1}`,
+    image: validImage(page?.image) ? page.image : null,
+  }));
 }
 
 function normalizeBoardSummary(value) {

@@ -1,12 +1,14 @@
-const CACHE = "airboard-v28";
+const CACHE = "airboard-v30";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./accessibility.css",
+  "./board-pages.css",
   "./app.js",
   "./ai-board.js",
   "./ai-contract.js",
+  "./board-pages.js",
   "./calibration.js",
   "./gesture-illustrations.js",
   "./assets/gesture-pointer.png",

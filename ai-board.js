@@ -34,6 +34,7 @@ export function createAIBoard({
     drawTimer,
     elements = [],
     history = [],
+    redoHistory = [],
     pendingStart = 0,
     cloudBusy = false,
     cloudCooldown = 0,
@@ -48,6 +49,10 @@ export function createAIBoard({
       localStorage.getItem("airboard-ai-endpoint") ||
       "https://airboard-ai.doppiaelletech.workers.dev/";
 
+  function pushHistory(snapshot) {
+    history.push(snapshot);
+    redoHistory = [];
+  }
   function clearTimers() {
     clearTimeout(glyphTimer);
     clearTimeout(contextTimer);
@@ -183,7 +188,8 @@ export function createAIBoard({
       H = semantic.clientHeight,
       left = Math.max(30, W * 0.055),
       right = Math.max(30, W * 0.055),
-      top = Math.max(48, H * 0.1),
+      compact = window.matchMedia?.("(max-width: 720px)")?.matches ?? W <= 720,
+      top = compact ? Math.max(136, H * 0.18) : Math.max(64, H * 0.11),
       font = Math.max(34, Math.min(54, W / 18)),
       line = Math.round(font * 1.5),
       gap = Math.round(font * 0.76),
@@ -281,7 +287,7 @@ export function createAIBoard({
       ss = all.slice(pendingStart);
     if (!ss.length) return;
     const groups = splitGroups(ss);
-    history.push({
+    pushHistory({
       strokes: clone(all),
       elements: clone(elements),
       pendingStart,
@@ -383,7 +389,7 @@ export function createAIBoard({
         if (!(await ingest(g, n, token, expectedDomain))) return false;
       }
       if (token !== generation) return false;
-      history.push(snapshot);
+      pushHistory(snapshot);
       setStrokes(all.slice(0, pendingStart));
       pendingStart = getStrokes().length;
       render();
@@ -403,7 +409,7 @@ export function createAIBoard({
   function addSpace() {
     if (!enabled) return false;
     confirmReady();
-    history.push({
+    pushHistory({
       strokes: clone(getStrokes()),
       elements: clone(elements),
       pendingStart,
@@ -644,7 +650,7 @@ export function createAIBoard({
   function correctElement(id, content) {
     const next = correctSemanticElement(elements, id, content);
     if (!next) return false;
-    history.push({
+    pushHistory({
       strokes: clone(getStrokes()),
       elements: clone(elements),
       pendingStart,
@@ -657,7 +663,7 @@ export function createAIBoard({
   function deleteElement(id) {
     const next = deleteSemanticElement(elements, id);
     if (!next) return false;
-    history.push({
+    pushHistory({
       strokes: clone(getStrokes()),
       elements: clone(elements),
       pendingStart,
@@ -670,6 +676,11 @@ export function createAIBoard({
   function undoSemantic() {
     if (!history.length) return false;
     invalidateAsync();
+    redoHistory.push({
+      strokes: clone(getStrokes()),
+      elements: clone(elements),
+      pendingStart,
+    });
     const h = history.pop();
     elements = h.elements;
     pendingStart = h.pendingStart;
@@ -677,6 +688,23 @@ export function createAIBoard({
     render();
     return true;
   }
+  function redoSemantic() {
+    if (!redoHistory.length) return false;
+    invalidateAsync();
+    history.push({
+      strokes: clone(getStrokes()),
+      elements: clone(elements),
+      pendingStart,
+    });
+    const h = redoHistory.pop();
+    elements = h.elements;
+    pendingStart = h.pendingStart;
+    setStrokes(h.strokes);
+    render();
+    return true;
+  }
+  const canUndoSemantic = () => history.length > 0;
+  const canRedoSemantic = () => redoHistory.length > 0;
   function cancelPending() {
     clearTimers();
     invalidateAsync();
@@ -688,8 +716,30 @@ export function createAIBoard({
     invalidateAsync();
     elements = [];
     history = [];
+    redoHistory = [];
     pendingStart = 0;
     render();
+  }
+  function exportState() {
+    return {
+      elements: clone(elements),
+      history: clone(history),
+      redoHistory: clone(redoHistory),
+      pendingStart,
+      domain,
+    };
+  }
+  function importState(state) {
+    clearTimers();
+    invalidateAsync();
+    elements = clone(state?.elements || []);
+    history = clone(state?.history || []);
+    redoHistory = clone(state?.redoHistory || []);
+    pendingStart = Math.max(0, Number(state?.pendingStart) || 0);
+    if (["math", "letters", "draw"].includes(state?.domain)) domain = state.domain;
+    pendingStart = Math.min(pendingStart, getStrokes().length);
+    render();
+    if (enabled) onState("ready");
   }
   function getSessionSummary() {
     const confirmed = elements.filter((element) => element.confirmed);
@@ -721,6 +771,11 @@ export function createAIBoard({
     deleteElement,
     cancelPending,
     undoSemantic,
+    redoSemantic,
+    canUndoSemantic,
+    canRedoSemantic,
+    exportState,
+    importState,
     getSessionSummary,
     clear,
     resize: render,
