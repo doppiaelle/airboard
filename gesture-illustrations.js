@@ -2,32 +2,39 @@ const ICONS = {
   pointer: `
     <svg viewBox="0 0 180 140" role="img" focusable="false">
       <g class="gesture-hand gesture-hand-pointer">
-        <path class="hand-fill" d="M72 126c-13-8-21-23-21-39V69c0-7 10-9 13-3l5 10V29c0-10 15-10 15 0v30-39c0-10 15-10 15 0v39-30c0-10 15-10 15 0v33-21c0-10 15-10 15 0v38l7-10c5-7 16-1 12 7l-18 37c-5 10-15 17-27 17H86c-5 0-10-1-14-4Z"/>
-        <path class="hand-detail" d="M69 76c7 9 10 17 10 27M84 59v30M99 59v30M114 62v27"/>
+        <path class="hand-fill" d="M68 127c-13-7-21-20-21-35 0-12 6-22 16-28l12-7V23c0-10 7-18 17-18s18 8 18 18v40l7-5c8-6 19-4 25 4 5 7 5 16 0 23l-17 25c-8 12-21 20-36 20H79c-4 0-8-1-11-3Z"/>
+        <path class="hand-fill" d="M67 65c-3-8 1-17 9-20 7-3 15 0 19 6l3 6c1-8 8-14 16-14 9 0 16 7 16 16v17H72l-5-11Z"/>
+        <path class="hand-detail" d="M76 78c15-10 35-12 51-4M76 94h45M77 109h34M92 62V25"/>
       </g>
-      <circle class="gesture-target" cx="91.5" cy="12" r="7"/>
-      <path class="motion-line pointer-motion" d="M49 18h24M61 10l12 8-12 8"/>
+      <circle class="gesture-target" cx="92" cy="8" r="7"/>
+      <path class="motion-line pointer-motion" d="M48 21h20M58 13l10 8-10 8"/>
     </svg>`,
   write: `
     <svg viewBox="0 0 180 140" role="img" focusable="false">
       <g class="gesture-hand gesture-hand-write">
-        <path class="hand-fill" d="M69 126c-15-8-23-23-23-40V70c0-8 10-10 14-3l8 15 1-41c0-9 14-10 15-1l2 26 8-37c2-9 16-6 14 3l-6 35 13-25c4-8 17-3 13 6l-10 25 14-13c7-6 16 4 10 11l-18 20c-6 7-9 14-11 23-2 9-10 16-20 16H84c-5 0-10-1-15-4Z"/>
-        <path class="hand-detail" d="M68 82c8 7 13 15 15 25M86 66l2 20M102 67l-3 20M118 73l-6 18"/>
+        <path class="hand-fill" d="M91 41c15-16 41-17 57-3 12 11 19 27 18 43-1 26-22 47-48 48h-12c-17 0-30-12-30-28 0-9 4-17 11-22 7-6 10-13 8-22l-4-16Z"/>
+        <path class="hand-stroke grip-index" d="M144 54c-18-14-39-13-55 0L58 78"/>
+        <path class="hand-stroke grip-thumb" d="M146 98c-21 13-43 9-59-6L58 78"/>
+        <path class="hand-stroke grip-fingers" d="M148 70c-16-7-31-3-43 9M148 84c-15-2-27 3-36 15"/>
+        <path class="hand-detail" d="M103 111c12 3 25 0 34-8M103 47c10 0 19 4 27 10"/>
       </g>
-      <circle class="finger-ring ring-index" cx="84" cy="39" r="9"/>
-      <circle class="finger-ring ring-thumb" cx="132" cy="60" r="9"/>
-      <path class="motion-line pinch-motion" d="M96 45l10 5M120 55l-10-4"/>
+      <circle class="finger-ring ring-index" cx="58" cy="78" r="8"/>
+      <circle class="finger-ring ring-thumb" cx="58" cy="78" r="8"/>
+      <path class="motion-line pinch-motion" d="m42 65 10 10m-7 10 10-4"/>
     </svg>`,
   release: `
     <svg viewBox="0 0 180 140" role="img" focusable="false">
       <g class="gesture-hand gesture-hand-release">
-        <path class="hand-fill" d="M70 126c-14-8-22-23-22-39V70c0-8 10-10 14-3l7 14V38c0-10 15-10 15 0v28l10-39c2-9 16-6 14 3l-8 38 17-28c5-8 17-1 12 7l-14 27 18-15c7-6 16 5 9 12l-20 20c-6 6-9 14-11 23-2 9-10 16-20 16H85c-5 0-10-1-15-4Z"/>
-        <path class="hand-detail" d="M69 81c8 8 12 16 14 26M84 66l2 21M100 68l-4 19M115 74l-7 17"/>
+        <path class="hand-fill" d="M91 41c15-16 41-17 57-3 12 11 19 27 18 43-1 26-22 47-48 48h-12c-17 0-30-12-30-28 0-9 4-17 11-22 7-6 10-13 8-22l-4-16Z"/>
+        <path class="hand-stroke release-grip-index" d="M144 54c-18-14-39-13-55 0L50 67"/>
+        <path class="hand-stroke release-grip-thumb" d="M146 98c-21 13-43 9-59-6L64 97"/>
+        <path class="hand-stroke grip-fingers" d="M148 70c-16-7-31-3-43 9M148 84c-15-2-27 3-36 15"/>
+        <path class="hand-detail" d="M103 111c12 3 25 0 34-8M103 47c10 0 19 4 27 10"/>
       </g>
-      <circle class="finger-ring release-index" cx="76" cy="34" r="8"/>
-      <circle class="finger-ring release-thumb" cx="139" cy="58" r="8"/>
-      <path class="motion-line release-left" d="M68 28 54 22M58 15l-4 7 7 3"/>
-      <path class="motion-line release-right" d="m147 51 14-7m-4-6 4 6-6 3"/>
+      <circle class="finger-ring release-index" cx="50" cy="67" r="8"/>
+      <circle class="finger-ring release-thumb" cx="64" cy="97" r="8"/>
+      <path class="motion-line release-left" d="m44 56-9-10m-2 8 2-8 8 2"/>
+      <path class="motion-line release-right" d="m71 104 9 10m2-8-2 8-8-2"/>
     </svg>`,
   erase: `
     <svg viewBox="0 0 180 140" role="img" focusable="false">

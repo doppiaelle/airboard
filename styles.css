@@ -780,7 +780,7 @@ body:has(.panel:not([hidden])) .ai-state {
 }
 .calibration-dialog {
   width: min(94vw, 560px);
-  max-height: 96vh;
+  max-height: calc(100dvh - 24px);
   padding: 0;
   overflow: auto;
   border: 1px solid #ffffff24;
@@ -837,6 +837,9 @@ body:has(.panel:not([hidden])) .ai-state {
   background:
     radial-gradient(circle at 50% 45%, #9be7ff13, transparent 48%), #08090c80;
 }
+.calibration-step-visual[hidden] {
+  display: none !important;
+}
 gesture-illustration {
   display: block;
   color: #f7f8fa;
@@ -861,6 +864,13 @@ gesture-illustration svg {
   stroke-linecap: round;
   stroke-width: 2.4;
   opacity: 0.34;
+}
+.hand-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 18;
 }
 .finger-ring,
 .gesture-target {
@@ -894,6 +904,12 @@ gesture-illustration svg {
 .ring-thumb {
   animation: pinch-thumb 1.7s ease-in-out infinite;
 }
+.grip-index {
+  animation: grip-index 1.7s ease-in-out infinite;
+}
+.grip-thumb {
+  animation: grip-thumb 1.7s ease-in-out infinite;
+}
 .pinch-motion {
   animation: cue-opacity 1.7s ease-in-out infinite;
 }
@@ -906,6 +922,12 @@ gesture-illustration svg {
 .release-left,
 .release-right {
   animation: release-cue 1.8s ease-in-out infinite;
+}
+.release-grip-index {
+  animation: release-grip-index 1.8s ease-in-out infinite;
+}
+.release-grip-thumb {
+  animation: release-grip-thumb 1.8s ease-in-out infinite;
 }
 .gesture-hand-erase {
   transform-origin: 90px 112px;
@@ -993,22 +1015,40 @@ gesture-illustration svg {
   0%,
   100% {
     opacity: 0.35;
-    transform: translate(0, 0);
+    transform: translate(-11px, -8px);
   }
   50% {
     opacity: 1;
-    transform: translate(15px, 6px);
+    transform: translate(0, 0);
+  }
+}
+@keyframes grip-index {
+  0%,
+  100% {
+    transform: translate(-7px, -5px);
+  }
+  50% {
+    transform: translate(0, 0);
+  }
+}
+@keyframes grip-thumb {
+  0%,
+  100% {
+    transform: translate(7px, 6px);
+  }
+  50% {
+    transform: translate(0, 0);
   }
 }
 @keyframes pinch-thumb {
   0%,
   100% {
     opacity: 0.35;
-    transform: translate(0, 0);
+    transform: translate(9px, 9px);
   }
   50% {
     opacity: 1;
-    transform: translate(-15px, -6px);
+    transform: translate(0, 0);
   }
 }
 @keyframes release-index {
@@ -1030,6 +1070,26 @@ gesture-illustration svg {
   55%,
   100% {
     opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@keyframes release-grip-index {
+  0%,
+  20% {
+    transform: translate(9px, 9px);
+  }
+  60%,
+  100% {
+    transform: translate(0, 0);
+  }
+}
+@keyframes release-grip-thumb {
+  0%,
+  20% {
+    transform: translate(-4px, -10px);
+  }
+  60%,
+  100% {
     transform: translate(0, 0);
   }
 }
@@ -1060,6 +1120,44 @@ gesture-illustration svg {
   50% {
     opacity: 0.85;
   }
+}
+.calibration-dialog[data-view="recap"] .calibration-card {
+  padding-block: clamp(16px, 2.6dvh, 26px);
+}
+.calibration-dialog[data-view="recap"] .calibration-progress {
+  margin-bottom: clamp(12px, 2dvh, 22px);
+}
+.calibration-dialog[data-view="recap"] h2 {
+  margin-block: 6px;
+  font-size: clamp(24px, 4dvh, 30px);
+}
+.calibration-dialog[data-view="recap"] .calibration-card > p {
+  min-height: 0;
+  font-size: clamp(12px, 1.8dvh, 15px);
+  line-height: 1.4;
+}
+.calibration-dialog[data-view="recap"] .gesture-recap {
+  gap: clamp(5px, 1dvh, 9px);
+  margin-top: clamp(8px, 1.4dvh, 16px);
+}
+.calibration-dialog[data-view="recap"] .gesture-recap article {
+  padding: clamp(5px, 1dvh, 9px);
+}
+.calibration-dialog[data-view="recap"] .gesture-recap gesture-illustration {
+  height: clamp(50px, 10dvh, 78px);
+}
+.calibration-dialog[data-view="recap"] .gesture-recap span {
+  min-height: 22px;
+}
+.calibration-dialog[data-view="recap"] .calibration-meter {
+  margin-top: clamp(9px, 1.5dvh, 18px);
+}
+.calibration-dialog[data-view="recap"] .calibration-feedback {
+  min-height: 14px;
+  margin-top: 5px;
+}
+.calibration-dialog[data-view="recap"] .calibration-actions {
+  margin-top: clamp(9px, 1.5dvh, 16px);
 }
 .calibration-meter {
   height: 5px;

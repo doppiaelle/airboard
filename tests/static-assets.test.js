@@ -46,16 +46,19 @@ test("calibration and semantic correction controls ship together", async () => {
 });
 
 test("visual calibration includes every gesture illustration", async () => {
-  const [html, illustrations, accessibility] = await Promise.all([
+  const [html, illustrations, accessibility, styles] = await Promise.all([
     readFile(new URL("../index.html", import.meta.url), "utf8"),
     readFile(new URL("../gesture-illustrations.js", import.meta.url), "utf8"),
     readFile(new URL("../accessibility.css", import.meta.url), "utf8"),
+    readFile(new URL("../styles.css", import.meta.url), "utf8"),
   ]);
   for (const gesture of ["pointer", "write", "release", "erase"]) {
     assert.match(html, new RegExp(`gesture="${gesture}"`));
     assert.match(illustrations, new RegExp(`${gesture}:`));
   }
   assert.match(accessibility, /prefers-reduced-motion:\s*reduce/);
+  assert.match(styles, /calibration-step-visual\[hidden\]/);
+  assert.match(styles, /max-height:\s*calc\(100dvh/);
 });
 
 test("Pages workflow supports an explicitly selected preview branch", async () => {

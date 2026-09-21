@@ -109,14 +109,15 @@ const I = {
     calibrationSkip: "Skip",
     correctInk: "Correct ink",
     deleteInk: "Delete element",
-    calibrationFrameTitle: "Show your hand",
+    calibrationFrameTitle: "Point with your index",
     calibrationFrameText:
-      "Keep your hand comfortably inside the frame and hold it steady.",
-    calibrationOpenTitle: "Open thumb and index",
+      "Close the other fingers, keep your hand inside the frame and hold it steady.",
+    calibrationOpenTitle: "Release the stroke",
     calibrationOpenText:
-      "Hold them apart naturally. This sets your release gesture.",
+      "Keep the writing grip, then separate thumb and index slightly.",
     calibrationPinchTitle: "Pinch to write",
-    calibrationPinchText: "Touch thumb and index as you would while writing.",
+    calibrationPinchText:
+      "Close your hand as if holding a pen and touch thumb to index.",
     calibrationReady: "Great — continue when ready.",
     calibrationCollecting: "Hold that position…",
     calibrationDone: "Finish",
@@ -128,11 +129,11 @@ const I = {
     calibrationRecapReady: "You’re ready to write in the air.",
     calibrationGuideClose: "Close guide",
     gesturePointerTitle: "Pointer",
-    gesturePointerText: "Extend your index and move.",
+    gesturePointerText: "Close your hand; extend only the index.",
     gestureWriteTitle: "Write",
-    gestureWriteText: "Touch thumb and index.",
+    gestureWriteText: "Use a pen grip; touch thumb and index.",
     gestureReleaseTitle: "Release",
-    gestureReleaseText: "Separate them to stop.",
+    gestureReleaseText: "Keep the grip; separate thumb and index.",
     gestureEraseTitle: "Erase",
     gestureEraseText: "Open your hand and hold still.",
     qualityGood: "Tracking good",
@@ -197,14 +198,15 @@ const I = {
     calibrationSkip: "Salta",
     correctInk: "Correggi segno",
     deleteInk: "Elimina elemento",
-    calibrationFrameTitle: "Mostra la mano",
+    calibrationFrameTitle: "Punta con l’indice",
     calibrationFrameText:
-      "Tieni la mano comodamente nell’inquadratura e resta fermo.",
-    calibrationOpenTitle: "Apri pollice e indice",
+      "Chiudi le altre dita, resta nell’inquadratura e tieni la mano ferma.",
+    calibrationOpenTitle: "Rilascia il tratto",
     calibrationOpenText:
-      "Tienili separati in modo naturale. Imposta il gesto di rilascio.",
+      "Mantieni la presa di scrittura, poi separa leggermente pollice e indice.",
     calibrationPinchTitle: "Pizzica per scrivere",
-    calibrationPinchText: "Unisci pollice e indice come faresti mentre scrivi.",
+    calibrationPinchText:
+      "Chiudi la mano come se impugnassi una penna e unisci pollice e indice.",
     calibrationReady: "Ottimo — continua quando vuoi.",
     calibrationCollecting: "Mantieni la posizione…",
     calibrationDone: "Termina",
@@ -216,11 +218,11 @@ const I = {
     calibrationRecapReady: "Sei pronto a scrivere nello spazio.",
     calibrationGuideClose: "Chiudi guida",
     gesturePointerTitle: "Puntatore",
-    gesturePointerText: "Estendi l’indice e muovilo.",
+    gesturePointerText: "Chiudi la mano; estendi solo l’indice.",
     gestureWriteTitle: "Scrivi",
-    gestureWriteText: "Unisci pollice e indice.",
+    gestureWriteText: "Simula la presa della penna e unisci le dita.",
     gestureReleaseTitle: "Rilascia",
-    gestureReleaseText: "Separali per interrompere il tratto.",
+    gestureReleaseText: "Mantieni la presa e separa le dita.",
     gestureEraseTitle: "Cancella",
     gestureEraseText: "Apri la mano e tienila ferma.",
     qualityGood: "Tracciamento stabile",
@@ -495,8 +497,8 @@ const calibrationCoach = document.querySelector("#calibrationCoach"),
   calibrationDots = [...document.querySelectorAll(".calibration-progress i")],
   calibrationSteps = [
     ["calibrationFrameTitle", "calibrationFrameText", "pointer"],
-    ["calibrationOpenTitle", "calibrationOpenText", "release"],
     ["calibrationPinchTitle", "calibrationPinchText", "write"],
+    ["calibrationOpenTitle", "calibrationOpenText", "release"],
   ];
 
 function renderCalibrationStep() {
@@ -511,6 +513,7 @@ function renderCalibrationStep() {
   );
   calibrationStepVisual.hidden = recap;
   calibrationGestureRecap.hidden = !recap;
+  calibrationCoach.dataset.view = recap ? "recap" : "step";
   if (!recap)
     calibrationHand.setAttribute("gesture", calibrationSteps[step][2]);
   calibrationFeedback.textContent = t(
@@ -594,17 +597,17 @@ function observeCalibration(lm, point) {
     if (session.lastPoint)
       session.jitterSamples.push(distance(session.lastPoint, point));
     session.lastPoint = point;
-  } else if (session.step === 1 && ratio > 0.48) {
-    session.openRatios.push(ratio);
-  } else if (session.step === 2 && ratio < 0.58) {
+  } else if (session.step === 1 && ratio < 0.58) {
     session.pinchRatios.push(ratio);
+  } else if (session.step === 2 && ratio > 0.48) {
+    session.openRatios.push(ratio);
   }
   const count =
     session.step === 0
       ? session.handScales.length
       : session.step === 1
-        ? session.openRatios.length
-        : session.pinchRatios.length;
+        ? session.pinchRatios.length
+        : session.openRatios.length;
   calibrationMeter.style.width = `${Math.min(100, (count / target) * 100)}%`;
   const ready = count >= target;
   calibrationNext.disabled = !ready;
