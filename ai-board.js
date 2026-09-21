@@ -8,6 +8,7 @@ import {
   deleteSemanticElement,
   semanticChoices,
 } from "./semantic-ink.js";
+import { normalizeManualLayout, recognizeBasicShape } from "./semantic-object-tools.js";
 
 const QUICK_CLOSE = 480,
   JOIN_CLOSE = 950,
@@ -198,6 +199,10 @@ export function createAIBoard({
       y = top;
     for (const e of elements) {
       if (!e.confirmed) continue;
+      if (e.manualLayout) {
+        e.layout = normalizeManualLayout(e.manualLayout, W, H);
+        continue;
+      }
       if (e.type === "space") {
         x += space;
         if (x > W - right) {
@@ -207,8 +212,8 @@ export function createAIBoard({
         continue;
       }
       const cell =
-        e.type === "drawing"
-          ? Math.max(gap, Math.min(font * 1.45, e.aspect * font))
+        e.type === "drawing" || e.type === "shape"
+          ? Math.max(gap, Math.min(font * 1.75, e.aspect * font))
           : gap;
       if (x + cell > W - right) {
         x = left;
@@ -295,9 +300,12 @@ export function createAIBoard({
     for (const group of groups) {
       const b = bounds(group);
       if (!b) continue;
+      const shape = recognizeBasicShape(group);
       elements.push({
         id: `d${Date.now()}-${seq++}`,
-        type: "drawing",
+        type: shape ? "shape" : "drawing",
+        shapeKind: shape?.kind || null,
+        shapeGeometry: shape?.geometry || null,
         confirmed: true,
         domain: "draw",
         sourceStrokes: clone(group),
@@ -585,6 +593,40 @@ export function createAIBoard({
       ctx.stroke();
     }
   }
+  function drawShape(e) {
+    const l = e.layout;
+    if (!l) return;
+    const geometry = e.shapeGeometry || {
+      start: { x: 0.08, y: 0.5 },
+      end: { x: 0.92, y: 0.5 },
+    };
+    const point = (p) => ({ x: l.x + p.x * l.w, y: l.y + p.y * l.h });
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = "#eefcff";
+    ctx.lineWidth = Math.max(2.5, Math.min(5, Math.min(l.w, l.h) * 0.08));
+    ctx.lineCap = ctx.lineJoin = "round";
+    if (e.shapeKind === "rectangle") {
+      ctx.strokeRect(l.x + 4, l.y + 4, Math.max(2, l.w - 8), Math.max(2, l.h - 8));
+    } else {
+      const start = point(geometry.start), end = point(geometry.end);
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.stroke();
+      if (e.shapeKind === "arrow") {
+        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+        const size = Math.max(10, Math.min(22, Math.min(l.w, l.h) * 0.35));
+        ctx.beginPath();
+        ctx.moveTo(end.x, end.y);
+        ctx.lineTo(end.x - Math.cos(angle - 0.55) * size, end.y - Math.sin(angle - 0.55) * size);
+        ctx.moveTo(end.x, end.y);
+        ctx.lineTo(end.x - Math.cos(angle + 0.55) * size, end.y - Math.sin(angle + 0.55) * size);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
   function drawPlacedStroke(e, L) {
     const b = e.bounds,
       l = e.layout;
@@ -620,6 +662,10 @@ export function createAIBoard({
     ctx.font = `600 ${L.font}px Inter,system-ui,sans-serif`;
     for (const e of elements) {
       if (e.type === "space") continue;
+      if (e.type === "shape" && e.confirmed && e.layout) {
+        drawShape(e);
+        continue;
+      }
       if (e.type === "drawing" && e.confirmed && e.layout) {
         drawPlacedStroke(e, L);
         continue;
@@ -642,6 +688,7 @@ export function createAIBoard({
           content: e.content || "",
           confidence: e.confidence ?? 1,
           manual: Boolean(e.manual),
+          shapeKind: e.shapeKind || null,
           layout: { ...e.layout },
           choices: e.type === "glyph" ? semanticChoices(e) : [],
         })),
@@ -656,6 +703,61 @@ export function createAIBoard({
       pendingStart,
     });
     elements = next;
+    render();
+    onState("ready");
+    return true;
+  }
+  function beginElementTransform(id) {
+    const element = elements.find((item) => item.id === id);
+    if (!element?.layout) return false;
+    pushHistory({
+      strokes: clone(getStrokes()),
+      elements: clone(elements),
+      pendingStart,
+    });
+    return true;
+  }
+  function updateElementLayout(id, nextLayout) {
+    const element = elements.find((item) => item.id === id);
+    if (!element) return false;
+    element.manualLayout = normalizeManualLayout(
+      nextLayout,
+      semantic.clientWidth,
+      semantic.clientHeight,
+    );
+    element.layout = { ...element.manualLayout };
+    render();
+    return true;
+  }
+  function editElementContent(id, content) {
+    const element = elements.find((item) => item.id === id);
+    const next = String(content ?? "").trim().slice(0, 24);
+    if (!element || element.type !== "glyph" || !next) return false;
+    pushHistory({
+      strokes: clone(getStrokes()),
+      elements: clone(elements),
+      pendingStart,
+    });
+    element.content = next;
+    element.manual = true;
+    element.confirmed = true;
+    render();
+    onState("ready");
+    return true;
+  }
+  function restoreElement(id) {
+    const index = elements.findIndex((item) => item.id === id);
+    if (index < 0) return false;
+    const element = elements[index];
+    const source = clone(element.sourceStrokes || []);
+    pushHistory({
+      strokes: clone(getStrokes()),
+      elements: clone(elements),
+      pendingStart,
+    });
+    elements.splice(index, 1);
+    if (source.length) setStrokes([...getStrokes(), ...source]);
+    pendingStart = getStrokes().length;
     render();
     onState("ready");
     return true;
@@ -769,6 +871,10 @@ export function createAIBoard({
     addSpace,
     correctElement,
     deleteElement,
+    beginElementTransform,
+    updateElementLayout,
+    editElementContent,
+    restoreElement,
     cancelPending,
     undoSemantic,
     redoSemantic,

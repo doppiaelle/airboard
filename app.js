@@ -35,6 +35,8 @@ const video = document.querySelector("#camera"),
   semanticControls = document.querySelector("#semanticControls"),
   semanticEditor = document.querySelector("#semanticEditor"),
   semanticChoices = document.querySelector("#semanticChoices"),
+  semanticManualEdit = document.querySelector("#semanticManualEdit"),
+  semanticManualInput = document.querySelector("#semanticManualInput"),
   modeButtons = [...document.querySelectorAll(".mode-btn")];
 let landmarker,
   running = false,
@@ -112,6 +114,8 @@ const I = {
     calibrationSkip: "Skip",
     correctInk: "Correct ink",
     deleteInk: "Delete element",
+    applyEdit: "Apply",
+    restoreInk: "Restore original ink",
     calibrationFrameTitle: "Point with your index",
     calibrationFrameText:
       "Close the other fingers, keep your hand inside the frame and hold it steady.",
@@ -209,6 +213,8 @@ const I = {
     calibrationSkip: "Salta",
     correctInk: "Correggi segno",
     deleteInk: "Elimina elemento",
+    applyEdit: "Applica",
+    restoreInk: "Ripristina tratto originale",
     calibrationFrameTitle: "Punta con l’indice",
     calibrationFrameText:
       "Chiudi le altre dita, resta nell’inquadratura e tieni la mano ferma.",
@@ -472,10 +478,18 @@ function loadCalibrationProfile() {
 function closeSemanticEditor() {
   selectedSemanticId = null;
   semanticEditor.hidden = true;
+  semanticControls.querySelectorAll(".semantic-hit.selected").forEach((node) =>
+    node.classList.remove("selected"),
+  );
 }
 
 function openSemanticEditor(element) {
   selectedSemanticId = element.id;
+  semanticControls.querySelectorAll(".semantic-hit").forEach((node) =>
+    node.classList.toggle("selected", node.dataset.elementId === element.id),
+  );
+  semanticManualEdit.hidden = element.type !== "glyph";
+  semanticManualInput.value = element.content || "";
   semanticChoices.replaceChildren();
   for (const choice of element.choices) {
     const button = document.createElement("button");
@@ -512,6 +526,8 @@ function syncSemanticControls(elements) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "semantic-hit";
+    button.dataset.elementId = element.id;
+    button.classList.toggle("selected", selectedSemanticId === element.id);
     button.style.left = `${element.layout.x}px`;
     button.style.top = `${element.layout.y}px`;
     button.style.width = `${Math.max(32, element.layout.w)}px`;
@@ -524,7 +540,47 @@ function syncSemanticControls(elements) {
         ? `${t("correctInk")}: ${element.content || "?"}`
         : t("deleteInk"),
     );
-    button.onclick = () => openSemanticEditor(element);
+    const resizeHandle = document.createElement("span");
+    resizeHandle.className = "semantic-resize-handle";
+    resizeHandle.setAttribute("aria-hidden", "true");
+    button.append(resizeHandle);
+
+    let transform = null;
+    button.onpointerdown = (event) => {
+      if (event.button !== 0) return;
+      transform = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        layout: { ...element.layout },
+        resize: event.target === resizeHandle,
+        started: false,
+      };
+      button.setPointerCapture?.(event.pointerId);
+    };
+    button.onpointermove = (event) => {
+      if (!transform || event.pointerId !== transform.pointerId) return;
+      const dx = event.clientX - transform.x, dy = event.clientY - transform.y;
+      if (!transform.started && Math.hypot(dx, dy) < 4) return;
+      if (!transform.started) {
+        transform.started = ai.beginElementTransform(element.id);
+        if (!transform.started) return;
+        selectedSemanticId = element.id;
+      }
+      const next = transform.resize
+        ? { ...transform.layout, w: transform.layout.w + dx, h: transform.layout.h + dy }
+        : { ...transform.layout, x: transform.layout.x + dx, y: transform.layout.y + dy };
+      ai.updateElementLayout(element.id, next);
+      refreshHistoryControls();
+    };
+    button.onpointerup = (event) => {
+      if (!transform || event.pointerId !== transform.pointerId) return;
+      const moved = transform.started;
+      transform = null;
+      if (!moved) openSemanticEditor(element);
+      else boardPagesController?.scheduleCurrentSnapshot();
+    };
+    button.onpointercancel = () => (transform = null);
     semanticControls.append(button);
   }
   if (
@@ -538,6 +594,26 @@ document.querySelector("#semanticEditorClose").onclick = closeSemanticEditor;
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !semanticEditor.hidden) closeSemanticEditor();
 });
+document.querySelector("#semanticApply").onclick = () => {
+  if (selectedSemanticId && ai.editElementContent(selectedSemanticId, semanticManualInput.value)) {
+    refreshHistoryControls();
+    boardPagesController?.scheduleCurrentSnapshot();
+  }
+  closeSemanticEditor();
+};
+semanticManualInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    document.querySelector("#semanticApply").click();
+  }
+});
+document.querySelector("#semanticRestore").onclick = () => {
+  if (selectedSemanticId && ai.restoreElement(selectedSemanticId)) {
+    refreshHistoryControls();
+    boardPagesController?.scheduleCurrentSnapshot();
+  }
+  closeSemanticEditor();
+};
 document.querySelector("#semanticDelete").onclick = () => {
   if (selectedSemanticId) ai.deleteElement(selectedSemanticId);
   closeSemanticEditor();
