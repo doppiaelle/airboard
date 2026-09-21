@@ -2,7 +2,9 @@ name: Final PR5 interaction fixes
 on:
   push:
     branches: [codex/board-pages]
-    paths: [.github/workflows/fix-pr5-final.yml]
+    paths:
+      - .github/workflows/fix-pr5-final.yml
+      - tools/fix-pr5-undo-redo.py
 permissions:
   contents: write
 jobs:
