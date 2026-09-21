@@ -2,6 +2,7 @@ import {
   FilesetResolver,
   HandLandmarker,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm";
+import "./gesture-illustrations.js";
 import { createAIBoard } from "./ai-board.js";
 import {
   createCalibrationProfile,
@@ -103,6 +104,7 @@ const I = {
     cloudDeny: "Keep it local",
     cloudAllow: "Allow cloud AI",
     recalibrate: "Recalibrate gestures",
+    gestureGuide: "Gesture guide",
     calibrationEyebrow: "QUICK SETUP",
     calibrationSkip: "Skip",
     correctInk: "Correct ink",
@@ -117,8 +119,22 @@ const I = {
     calibrationPinchText: "Touch thumb and index as you would while writing.",
     calibrationReady: "Great — continue when ready.",
     calibrationCollecting: "Hold that position…",
-    calibrationDone: "Calibration saved",
+    calibrationDone: "Finish",
     calibrationContinue: "Continue",
+    calibrationReview: "Review gestures",
+    calibrationRecapTitle: "Your AirBoard gestures",
+    calibrationRecapText:
+      "Keep these four gestures handy while presenting. You can reopen this guide from the menu.",
+    calibrationRecapReady: "You’re ready to write in the air.",
+    calibrationGuideClose: "Close guide",
+    gesturePointerTitle: "Pointer",
+    gesturePointerText: "Extend your index and move.",
+    gestureWriteTitle: "Write",
+    gestureWriteText: "Touch thumb and index.",
+    gestureReleaseTitle: "Release",
+    gestureReleaseText: "Separate them to stop.",
+    gestureEraseTitle: "Erase",
+    gestureEraseText: "Open your hand and hold still.",
     qualityGood: "Tracking good",
     qualityFar: "Move closer",
     qualityNear: "Move back",
@@ -176,6 +192,7 @@ const I = {
     cloudDeny: "Mantieni locale",
     cloudAllow: "Consenti AI cloud",
     recalibrate: "Ricalibra i gesti",
+    gestureGuide: "Guida ai gesti",
     calibrationEyebrow: "CONFIGURAZIONE RAPIDA",
     calibrationSkip: "Salta",
     correctInk: "Correggi segno",
@@ -190,8 +207,22 @@ const I = {
     calibrationPinchText: "Unisci pollice e indice come faresti mentre scrivi.",
     calibrationReady: "Ottimo — continua quando vuoi.",
     calibrationCollecting: "Mantieni la posizione…",
-    calibrationDone: "Calibrazione salvata",
+    calibrationDone: "Termina",
     calibrationContinue: "Continua",
+    calibrationReview: "Rivedi i gesti",
+    calibrationRecapTitle: "I tuoi gesti AirBoard",
+    calibrationRecapText:
+      "Ricorda questi quattro gesti mentre presenti. Puoi riaprire questa guida dal menu.",
+    calibrationRecapReady: "Sei pronto a scrivere nello spazio.",
+    calibrationGuideClose: "Chiudi guida",
+    gesturePointerTitle: "Puntatore",
+    gesturePointerText: "Estendi l’indice e muovilo.",
+    gestureWriteTitle: "Scrivi",
+    gestureWriteText: "Unisci pollice e indice.",
+    gestureReleaseTitle: "Rilascia",
+    gestureReleaseText: "Separali per interrompere il tratto.",
+    gestureEraseTitle: "Cancella",
+    gestureEraseText: "Apri la mano e tienila ferma.",
     qualityGood: "Tracciamento stabile",
     qualityFar: "Avvicinati",
     qualityNear: "Allontanati",
@@ -455,25 +486,48 @@ const calibrationCoach = document.querySelector("#calibrationCoach"),
   calibrationTitle = document.querySelector("#calibrationTitle"),
   calibrationText = document.querySelector("#calibrationText"),
   calibrationFeedback = document.querySelector("#calibrationFeedback"),
+  calibrationSkip = document.querySelector("#calibrationSkip"),
   calibrationNext = document.querySelector("#calibrationNext"),
   calibrationMeter = document.querySelector(".calibration-meter span"),
+  calibrationStepVisual = document.querySelector("#calibrationStepVisual"),
+  calibrationHand = document.querySelector("#calibrationHand"),
+  calibrationGestureRecap = document.querySelector("#calibrationGestureRecap"),
   calibrationDots = [...document.querySelectorAll(".calibration-progress i")],
   calibrationSteps = [
-    ["calibrationFrameTitle", "calibrationFrameText"],
-    ["calibrationOpenTitle", "calibrationOpenText"],
-    ["calibrationPinchTitle", "calibrationPinchText"],
+    ["calibrationFrameTitle", "calibrationFrameText", "pointer"],
+    ["calibrationOpenTitle", "calibrationOpenText", "release"],
+    ["calibrationPinchTitle", "calibrationPinchText", "write"],
   ];
 
 function renderCalibrationStep() {
   if (!calibrationSession) return;
-  const step = calibrationSession.step;
-  calibrationTitle.textContent = t(calibrationSteps[step][0]);
-  calibrationText.textContent = t(calibrationSteps[step][1]);
-  calibrationFeedback.textContent = t("calibrationCollecting");
-  calibrationNext.textContent =
-    step === 2 ? t("calibrationDone") : t("calibrationContinue");
-  calibrationNext.disabled = true;
-  calibrationMeter.style.width = "0%";
+  const step = calibrationSession.step,
+    recap = step === 3;
+  calibrationTitle.textContent = t(
+    recap ? "calibrationRecapTitle" : calibrationSteps[step][0],
+  );
+  calibrationText.textContent = t(
+    recap ? "calibrationRecapText" : calibrationSteps[step][1],
+  );
+  calibrationStepVisual.hidden = recap;
+  calibrationGestureRecap.hidden = !recap;
+  if (!recap)
+    calibrationHand.setAttribute("gesture", calibrationSteps[step][2]);
+  calibrationFeedback.textContent = t(
+    recap ? "calibrationRecapReady" : "calibrationCollecting",
+  );
+  calibrationNext.textContent = t(
+    recap
+      ? calibrationSession.guideOnly
+        ? "calibrationGuideClose"
+        : "calibrationDone"
+      : step === 2
+        ? "calibrationReview"
+        : "calibrationContinue",
+  );
+  calibrationNext.disabled = !recap;
+  calibrationSkip.hidden = recap;
+  calibrationMeter.style.width = recap ? "100%" : "0%";
   calibrationDots.forEach((dot, index) =>
     dot.classList.toggle("active", index <= step),
   );
@@ -513,6 +567,20 @@ function finishCalibration() {
   refreshUI();
 }
 
+function closeCalibrationGuide() {
+  calibrationSession = null;
+  calibrationCoach.close();
+  refreshUI();
+}
+
+function openGestureGuide() {
+  if (!running || calibrationSession) return;
+  setSidebar(false);
+  calibrationSession = { step: 3, guideOnly: true };
+  renderCalibrationStep();
+  calibrationCoach.showModal();
+}
+
 function observeCalibration(lm, point) {
   const scale = distance(lm[0], lm[9]);
   updateTrackingQuality(true, scale);
@@ -520,6 +588,7 @@ function observeCalibration(lm, point) {
   const session = calibrationSession,
     ratio = pinchRatio(lm),
     target = 24;
+  if (session.step === 3) return true;
   if (session.step === 0 && scale > 0.075 && scale < 0.38) {
     session.handScales.push(scale);
     if (session.lastPoint)
@@ -563,27 +632,35 @@ function updateTrackingQuality(visible, scale = 0) {
 
 calibrationNext.onclick = () => {
   if (!calibrationSession || calibrationNext.disabled) return;
-  if (calibrationSession.step === 2) finishCalibration();
-  else {
+  if (calibrationSession.step === 3) {
+    if (calibrationSession.guideOnly) closeCalibrationGuide();
+    else finishCalibration();
+  } else {
     calibrationSession.step += 1;
     calibrationSession.lastPoint = null;
     renderCalibrationStep();
   }
 };
-document.querySelector("#calibrationSkip").onclick = () => {
+calibrationSkip.onclick = () => {
+  if (calibrationSession?.guideOnly) {
+    closeCalibrationGuide();
+    return;
+  }
   localStorage.setItem(CALIBRATION_SKIP_KEY, "v1");
   calibrationSession = null;
   calibrationCoach.close();
 };
 calibrationCoach.addEventListener("cancel", (event) => {
   event.preventDefault();
-  document.querySelector("#calibrationSkip").click();
+  if (calibrationSession?.guideOnly) closeCalibrationGuide();
+  else calibrationSkip.click();
 });
 document.querySelector("#recalibrate").onclick = () => {
   setSidebar(false);
   localStorage.removeItem(CALIBRATION_SKIP_KEY);
   startCalibration(true);
 };
+document.querySelector("#gestureGuide").onclick = openGestureGuide;
 
 const sessionSetup = document.querySelector("#sessionSetup"),
   sessionSetupForm = document.querySelector("#sessionSetupForm"),

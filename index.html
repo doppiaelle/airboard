@@ -107,6 +107,13 @@
           >
             Recalibrate gestures
           </button>
+          <button
+            id="gestureGuide"
+            class="sidebar-action"
+            data-i18n="gestureGuide"
+          >
+            Gesture guide
+          </button>
         </div>
       </aside>
 
@@ -242,13 +249,45 @@
       >
         <div class="calibration-card">
           <div class="calibration-progress" aria-hidden="true">
-            <i></i><i></i><i></i>
+            <i></i><i></i><i></i><i></i>
           </div>
           <div class="eyebrow" data-i18n="calibrationEyebrow">QUICK SETUP</div>
           <h2 id="calibrationTitle">Show your hand</h2>
           <p id="calibrationText">
             Keep your hand comfortably inside the frame.
           </p>
+          <div id="calibrationStepVisual" class="calibration-step-visual">
+            <gesture-illustration
+              id="calibrationHand"
+              gesture="pointer"
+            ></gesture-illustration>
+          </div>
+          <div id="calibrationGestureRecap" class="gesture-recap" hidden>
+            <article>
+              <gesture-illustration gesture="pointer"></gesture-illustration>
+              <strong data-i18n="gesturePointerTitle">Pointer</strong>
+              <span data-i18n="gesturePointerText"
+                >Extend your index and move.</span
+              >
+            </article>
+            <article>
+              <gesture-illustration gesture="write"></gesture-illustration>
+              <strong data-i18n="gestureWriteTitle">Write</strong>
+              <span data-i18n="gestureWriteText">Touch thumb and index.</span>
+            </article>
+            <article>
+              <gesture-illustration gesture="release"></gesture-illustration>
+              <strong data-i18n="gestureReleaseTitle">Release</strong>
+              <span data-i18n="gestureReleaseText">Separate them to stop.</span>
+            </article>
+            <article>
+              <gesture-illustration gesture="erase"></gesture-illustration>
+              <strong data-i18n="gestureEraseTitle">Erase</strong>
+              <span data-i18n="gestureEraseText"
+                >Open your hand and hold still.</span
+              >
+            </article>
+          </div>
           <div class="calibration-meter" aria-hidden="true"><span></span></div>
           <div
             id="calibrationFeedback"

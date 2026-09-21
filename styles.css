@@ -333,6 +333,9 @@ video {
   opacity: 0.4;
   cursor: default;
 }
+.sidebar-action + .sidebar-action {
+  margin-top: 8px;
+}
 .session-start {
   display: flex;
   align-items: center;
@@ -776,8 +779,10 @@ body:has(.panel:not([hidden])) .ai-state {
   white-space: nowrap;
 }
 .calibration-dialog {
-  width: min(92vw, 460px);
+  width: min(94vw, 560px);
+  max-height: 96vh;
   padding: 0;
+  overflow: auto;
   border: 1px solid #ffffff24;
   border-radius: 26px;
   background: #111318ee;
@@ -820,6 +825,241 @@ body:has(.panel:not([hidden])) .ai-state {
   margin: 0;
   color: #ffffffa1;
   line-height: 1.5;
+}
+.calibration-step-visual {
+  display: grid;
+  height: 180px;
+  margin-top: 18px;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid #ffffff12;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 45%, #9be7ff13, transparent 48%), #08090c80;
+}
+gesture-illustration {
+  display: block;
+  color: #f7f8fa;
+}
+.calibration-step-visual gesture-illustration {
+  width: min(82%, 270px);
+  height: 170px;
+}
+gesture-illustration svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.hand-fill {
+  fill: currentColor;
+  filter: drop-shadow(0 10px 18px #0007);
+}
+.hand-detail {
+  fill: none;
+  stroke: #0c1015;
+  stroke-linecap: round;
+  stroke-width: 2.4;
+  opacity: 0.34;
+}
+.finger-ring,
+.gesture-target {
+  fill: #9be7ff1c;
+  stroke: #9be7ff;
+  stroke-width: 2;
+}
+.motion-line,
+.erase-trail {
+  fill: none;
+  stroke: #9be7ff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+.gesture-target {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gesture-pulse 1.4s ease-in-out infinite;
+}
+.pointer-motion {
+  animation: pointer-cue 1.8s ease-in-out infinite;
+}
+.gesture-hand-pointer {
+  transform-origin: 95px 110px;
+  animation: pointer-hand 1.8s ease-in-out infinite;
+}
+.ring-index {
+  animation: pinch-index 1.7s ease-in-out infinite;
+}
+.ring-thumb {
+  animation: pinch-thumb 1.7s ease-in-out infinite;
+}
+.pinch-motion {
+  animation: cue-opacity 1.7s ease-in-out infinite;
+}
+.release-index {
+  animation: release-index 1.8s ease-in-out infinite;
+}
+.release-thumb {
+  animation: release-thumb 1.8s ease-in-out infinite;
+}
+.release-left,
+.release-right {
+  animation: release-cue 1.8s ease-in-out infinite;
+}
+.gesture-hand-erase {
+  transform-origin: 90px 112px;
+  animation: erase-hand 1.8s ease-in-out infinite;
+}
+.erase-trail {
+  stroke-dasharray: 5 6;
+  animation: erase-trail 1.8s ease-in-out infinite;
+}
+.gesture-recap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 18px;
+}
+.gesture-recap[hidden] {
+  display: none;
+}
+.gesture-recap article {
+  display: grid;
+  min-width: 0;
+  padding: 10px;
+  place-items: center;
+  border: 1px solid #ffffff10;
+  border-radius: 15px;
+  background: #08090c80;
+  text-align: center;
+}
+.gesture-recap gesture-illustration {
+  width: 100%;
+  height: 86px;
+}
+.gesture-recap strong {
+  margin-top: -3px;
+  font-size: 12px;
+}
+.gesture-recap span {
+  min-height: 28px;
+  margin-top: 3px;
+  color: #ffffff70;
+  font-size: 9px;
+  line-height: 1.35;
+}
+@keyframes gesture-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes cue-opacity {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes pointer-cue {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateX(-5px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(5px);
+  }
+}
+@keyframes pointer-hand {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+@keyframes pinch-index {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(15px, 6px);
+  }
+}
+@keyframes pinch-thumb {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-15px, -6px);
+  }
+}
+@keyframes release-index {
+  0% {
+    opacity: 0.4;
+    transform: translate(14px, 5px);
+  }
+  55%,
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@keyframes release-thumb {
+  0% {
+    opacity: 0.4;
+    transform: translate(-14px, -5px);
+  }
+  55%,
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@keyframes release-cue {
+  0%,
+  25% {
+    opacity: 0;
+  }
+  55%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes erase-hand {
+  0%,
+  100% {
+    transform: translateX(-7px) rotate(-3deg);
+  }
+  50% {
+    transform: translateX(7px) rotate(3deg);
+  }
+}
+@keyframes erase-trail {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.85;
+  }
 }
 .calibration-meter {
   height: 5px;
@@ -916,6 +1156,18 @@ body:has(.panel:not([hidden])) .ai-state {
   }
   .recap-actions button {
     width: 100%;
+  }
+  .calibration-card {
+    padding: 24px 20px;
+  }
+  .calibration-step-visual {
+    height: 150px;
+  }
+  .calibration-step-visual gesture-illustration {
+    height: 145px;
+  }
+  .gesture-recap gesture-illustration {
+    height: 70px;
   }
   .mode-btn {
     flex: 1;

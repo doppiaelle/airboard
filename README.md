@@ -2,7 +2,7 @@
 
 Prototype web/mobile: webcam + MediaPipe Hand Landmarker + virtual ink. Drawing and local recognition do not require an API key. Optional cloud refinement uses the separately deployed Worker in `api/` and asks the user for consent before sending cropped ink.
 
-The first camera session includes a three-step calibration coach. It learns a local pinch/release profile and shows live framing feedback; the profile never leaves the device and can be replaced from the side menu.
+The first camera session includes a visual calibration coach with animated hand examples. It learns a local pinch/release profile, shows live framing feedback and ends with a quick gesture recap; the profile never leaves the device and the guide can be reopened from the side menu.
 
 Session Mode groups a lesson, meeting or brainstorm into one local timeline. Mark important moments to capture the board (never the camera), then keep the session in the on-device archive or download a standalone HTML report with the final board.
 
