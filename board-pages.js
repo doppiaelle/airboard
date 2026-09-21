@@ -129,31 +129,34 @@ export function createBoardPagesController({
     rename: labels.rename || "Rename",
     duplicate: labels.duplicate || "Duplicate",
     delete: labels.delete || "Delete",
-    moveLeft: labels.moveLeft || "Move left",
-    moveRight: labels.moveRight || "Move right",
     namePrompt: labels.namePrompt || "Page name",
     ...labels,
   };
   let book = createBoardBook(getState()),
-    previewTimer = null;
+    previewTimer = null,
+    expandedId = null;
 
   const dock = document.createElement("section");
-  dock.className = "board-pages glass";
+  dock.className = "board-pages board-pages-edge glass";
   dock.setAttribute("aria-label", text.pages);
-  const head = document.createElement("div");
-  head.className = "board-pages-head";
-  const title = document.createElement("strong");
-  title.textContent = text.pages;
+
   const count = document.createElement("span");
+  count.className = "board-pages-count";
+
+  const strip = document.createElement("div");
+  strip.className = "board-pages-strip";
+
   const addButton = document.createElement("button");
   addButton.type = "button";
   addButton.className = "board-page-add";
   addButton.textContent = "+";
   addButton.title = addButton.ariaLabel = text.add;
-  head.append(title, count, addButton);
-  const strip = document.createElement("div");
-  strip.className = "board-pages-strip";
-  dock.append(head, strip);
+
+  const flyout = document.createElement("div");
+  flyout.className = "board-page-flyout";
+  flyout.hidden = true;
+
+  dock.append(count, strip, addButton, flyout);
   document.querySelector("#stage").append(dock);
 
   function snapshotCurrent() {
@@ -166,10 +169,15 @@ export function createBoardPagesController({
   }
 
   function switchTo(id) {
-    if (id === book.activeId) return;
+    if (id === book.activeId) {
+      expandedId = expandedId === id ? null : id;
+      render(false);
+      return;
+    }
     beforePageChange();
     snapshotCurrent();
     book = selectPage(book, id);
+    expandedId = id;
     setState(clone(activePage(book).state));
     render();
   }
@@ -182,12 +190,29 @@ export function createBoardPagesController({
     }, 420);
   }
 
-  function actionButton(label, glyph, handler, disabled = false) {
+  function verticalMoveLabel(direction) {
+    const it = document.documentElement.lang === "it";
+    return direction < 0
+      ? it
+        ? "Sposta pagina su"
+        : "Move page up"
+      : it
+        ? "Sposta pagina giù"
+        : "Move page down";
+  }
+
+  function actionButton(label, glyph, handler, disabled = false, danger = false) {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = glyph;
-    button.title = button.ariaLabel = label;
+    button.className = danger ? "danger" : "";
     button.disabled = disabled;
+    button.title = button.ariaLabel = label;
+    const icon = document.createElement("span");
+    icon.className = "board-page-action-icon";
+    icon.textContent = glyph;
+    const caption = document.createElement("span");
+    caption.textContent = label;
+    button.append(icon, caption);
     button.onclick = (event) => {
       event.stopPropagation();
       handler();
@@ -195,72 +220,109 @@ export function createBoardPagesController({
     return button;
   }
 
+  function renderFlyout() {
+    flyout.replaceChildren();
+    const page = book.pages.find((item) => item.id === expandedId);
+    if (!page) {
+      flyout.hidden = true;
+      return;
+    }
+    const index = book.pages.findIndex((item) => item.id === page.id);
+    const head = document.createElement("div");
+    head.className = "board-page-flyout-head";
+    const title = document.createElement("strong");
+    title.textContent = page.title;
+    const position = document.createElement("span");
+    position.textContent = `${index + 1}/${book.pages.length}`;
+    head.append(title, position);
+
+    const actions = document.createElement("div");
+    actions.className = "board-page-actions";
+    actions.append(
+      actionButton(text.rename, "✎", () => {
+        const next = prompt(text.namePrompt, page.title);
+        if (next == null) return;
+        book = renamePage(book, page.id, next);
+        render(false);
+      }),
+      actionButton(text.duplicate, "⧉", () => {
+        beforePageChange();
+        snapshotCurrent();
+        const before = book.activeId;
+        book = duplicatePage(book, page.id);
+        if (book.activeId !== before) {
+          expandedId = book.activeId;
+          setState(clone(activePage(book).state));
+        }
+        render();
+      }, book.pages.length >= MAX_BOARD_PAGES),
+      actionButton(verticalMoveLabel(-1), "↑", () => {
+        snapshotCurrent();
+        book = movePage(book, page.id, -1);
+        render();
+      }, index === 0),
+      actionButton(verticalMoveLabel(1), "↓", () => {
+        snapshotCurrent();
+        book = movePage(book, page.id, 1);
+        render();
+      }, index === book.pages.length - 1),
+      actionButton(text.delete, "×", () => {
+        if (book.pages.length <= 1) return;
+        beforePageChange();
+        snapshotCurrent();
+        const wasActive = page.id === book.activeId;
+        book = removePage(book, page.id);
+        if (wasActive) setState(clone(activePage(book).state));
+        expandedId = wasActive ? book.activeId : null;
+        render();
+      }, book.pages.length <= 1, true),
+    );
+    flyout.append(head, actions);
+    flyout.hidden = false;
+  }
+
   function render(ensureVisible = true) {
-    count.textContent = `${book.pages.findIndex((p) => p.id === book.activeId) + 1}/${book.pages.length}`;
+    const activeIndex = book.pages.findIndex((page) => page.id === book.activeId);
+    count.textContent = `${activeIndex + 1}/${book.pages.length}`;
     addButton.disabled = book.pages.length >= MAX_BOARD_PAGES;
     strip.replaceChildren();
+
     book.pages.forEach((page, index) => {
       const item = document.createElement("article");
       item.className = "board-page-thumb";
       item.classList.toggle("active", page.id === book.activeId);
+      item.classList.toggle("expanded", page.id === expandedId);
       item.dataset.pageId = page.id;
+
       const select = document.createElement("button");
       select.type = "button";
       select.className = "board-page-select";
       select.setAttribute("aria-current", page.id === book.activeId ? "page" : "false");
+      select.setAttribute("aria-expanded", String(page.id === expandedId));
+      select.ariaLabel = `${page.title} · ${index + 1}/${book.pages.length}`;
       select.onclick = () => switchTo(page.id);
+
       const visual = document.createElement("span");
       visual.className = "board-page-preview";
       if (page.preview) visual.style.backgroundImage = `url(${page.preview})`;
+      const number = document.createElement("span");
+      number.className = "board-page-number";
+      number.textContent = String(index + 1);
       const label = document.createElement("span");
       label.className = "board-page-title";
       label.textContent = page.title;
-      select.append(visual, label);
-      const actions = document.createElement("div");
-      actions.className = "board-page-actions";
-      actions.append(
-        actionButton(text.moveLeft, "←", () => {
-          snapshotCurrent();
-          book = movePage(book, page.id, -1);
-          render();
-        }, index === 0),
-        actionButton(text.moveRight, "→", () => {
-          snapshotCurrent();
-          book = movePage(book, page.id, 1);
-          render();
-        }, index === book.pages.length - 1),
-        actionButton(text.rename, "✎", () => {
-          const next = prompt(text.namePrompt, page.title);
-          if (next == null) return;
-          book = renamePage(book, page.id, next);
-          render();
-        }),
-        actionButton(text.duplicate, "⧉", () => {
-          beforePageChange();
-          snapshotCurrent();
-          const before = book.activeId;
-          book = duplicatePage(book, page.id);
-          if (book.activeId !== before) setState(clone(activePage(book).state));
-          render();
-        }, book.pages.length >= MAX_BOARD_PAGES),
-        actionButton(text.delete, "×", () => {
-          if (book.pages.length <= 1) return;
-          beforePageChange();
-          snapshotCurrent();
-          const wasActive = page.id === book.activeId;
-          book = removePage(book, page.id);
-          if (wasActive) setState(clone(activePage(book).state));
-          render();
-        }, book.pages.length <= 1),
-      );
-      item.append(select, actions);
+      select.append(visual, number, label);
+      item.append(select);
       strip.append(item);
     });
+
+    renderFlyout();
+
     if (ensureVisible)
       strip.querySelector(".board-page-thumb.active")?.scrollIntoView({
         behavior: "smooth",
-        block: "nearest",
-        inline: "center",
+        block: "center",
+        inline: "nearest",
       });
   }
 
@@ -269,16 +331,22 @@ export function createBoardPagesController({
     beforePageChange();
     snapshotCurrent();
     book = addPage(book, { strokes: [], aiState: null });
+    expandedId = book.activeId;
     setState(clone(activePage(book).state));
     render();
   };
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!expandedId || dock.contains(event.target)) return;
+    expandedId = null;
+    render(false);
+  });
 
   render();
 
   return {
     setLabels(next = {}) {
       Object.assign(text, next);
-      title.textContent = text.pages;
       dock.setAttribute("aria-label", text.pages);
       addButton.title = addButton.ariaLabel = text.add;
       render(false);
