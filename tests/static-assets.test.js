@@ -57,6 +57,8 @@ test("visual calibration includes every gesture illustration", async () => {
     assert.match(illustrations, new RegExp(`${gesture}:`));
   }
   assert.match(accessibility, /prefers-reduced-motion:\s*reduce/);
+  assert.match(styles, /assets\/gesture-hands\.webp/);
+  assert.match(illustrations, /gesture-hand-art/);
   assert.match(styles, /calibration-step-visual\[hidden\]/);
   assert.match(styles, /max-height:\s*calc\(100dvh/);
 });
