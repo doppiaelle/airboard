@@ -50,7 +50,7 @@ export function createAIBoard({
       "https://airboard-ai.doppiaelletech.workers.dev/";
 
   function pushHistory(snapshot) {
-    pushHistory(snapshot);
+    history.push(snapshot);
     redoHistory = [];
   }
   function clearTimers() {
