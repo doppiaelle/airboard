@@ -97,6 +97,11 @@
     box-shadow 170ms ease;
 }
 
+.board-page-thumb.active:not(.expanded) .board-page-select {
+  border-color: rgba(155, 231, 255, 0.76);
+  box-shadow: 0 0 0 1px rgba(155, 231, 255, 0.08);
+}
+
 .board-page-thumb.expanded .board-page-select {
   height: 62px;
   border-color: rgba(155, 231, 255, 0.78);
@@ -259,6 +264,80 @@
   font-size: 13px;
 }
 
+/* Compact drawing-mode switch: the old four-label bar stays as the hidden
+   source of truth, while one icon in the utility bar cycles the modes. */
+.tool-dock.mode-dock-source {
+  display: none !important;
+}
+.utility-switch.mode-switch-installed {
+  left: 50%;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+}
+.mode-cycle {
+  position: relative;
+  color: #c9f4ff;
+  background: rgba(155, 231, 255, 0.09);
+}
+.mode-cycle::before {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  color: currentColor;
+  font-size: 18px;
+  line-height: 1;
+}
+.mode-cycle::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #9be7ff;
+  box-shadow: 0 0 0 2px rgba(155, 231, 255, 0.12);
+}
+.mode-cycle[data-mode="free"]::before {
+  content: "✦";
+}
+.mode-cycle[data-mode="pointer"]::before {
+  content: "\261D\FE0E";
+  font-size: 19px;
+}
+.mode-cycle[data-mode="pen"]::before {
+  content: "✎";
+  font-size: 19px;
+}
+.mode-cycle[data-mode="pen"] .mode-cycle-mark {
+  display: block;
+}
+.mode-cycle[data-mode="eraser"]::before {
+  content: "";
+  width: 16px;
+  height: 11px;
+  border: 1.8px solid currentColor;
+  border-radius: 3px;
+  transform: rotate(-34deg);
+}
+.mode-cycle-mark {
+  position: absolute;
+  left: 9px;
+  bottom: 8px;
+  display: none;
+  width: 13px;
+  height: 5px;
+  border-bottom: 1.5px solid currentColor;
+  border-radius: 50%;
+  transform: rotate(-8deg);
+  opacity: 0.72;
+  pointer-events: none;
+}
+.mode-cycle-divider {
+  flex: 0 0 1px;
+}
+
 @media (max-width: 720px) {
   .menu-logo { gap: 7px; }
   .board-pages {
@@ -286,6 +365,11 @@
     border-radius: 14px;
   }
   .board-page-actions button { min-height: 34px; padding: 5px 7px; }
+  .utility-switch.mode-switch-installed {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: auto;
+    max-width: calc(100vw - 20px);
+  }
 }
 
 @media (max-height: 580px) {
