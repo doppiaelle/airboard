@@ -1,0 +1,30 @@
+name: Final PR5 interaction fixes
+on:
+  push:
+    branches: [codex/board-pages]
+    paths: [.github/workflows/fix-pr5-final.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/board-pages
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply patch
+        run: python tools/fix-pr5-undo-redo.py
+      - name: Validate
+        run: |
+          npm run check
+          npm test
+      - name: Commit changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add ai-board.js app.js board-pages.js index.html styles.css sw.js tests/board-pages-redo.test.js
+          git commit -m "Fix page selection and add page-local redo"
+          git push origin HEAD:codex/board-pages
