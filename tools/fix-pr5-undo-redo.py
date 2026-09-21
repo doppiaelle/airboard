@@ -7,19 +7,16 @@ def replace_once(path, old, new):
         raise SystemExit(f'missing pattern in {path}: {old[:80]!r}')
     p.write_text(s.replace(old, new, 1))
 
-# Board page tap behavior: selecting another page should not open its menu.
 replace_once('board-pages.js',
 '''    book = selectPage(book, id);\n    expandedId = id;\n    setState(clone(activePage(book).state));''',
 '''    book = selectPage(book, id);\n    expandedId = null;\n    setState(clone(activePage(book).state));''')
 
-# Semantic redo stack, persisted with each board page.
 replace_once('ai-board.js',
 '''    elements = [],\n    history = [],\n    pendingStart = 0,''',
 '''    elements = [],\n    history = [],\n    redoHistory = [],\n    pendingStart = 0,''')
 replace_once('ai-board.js',
 '''  function clearTimers() {''',
 '''  function pushHistory(snapshot) {\n    history.push(snapshot);\n    redoHistory = [];\n  }\n  function clearTimers() {''')
-# All user-visible semantic history writes invalidate redo.
 s = Path('ai-board.js').read_text().replace('history.push({', 'pushHistory({').replace('history.push(snapshot);', 'pushHistory(snapshot);')
 Path('ai-board.js').write_text(s)
 replace_once('ai-board.js',
@@ -38,12 +35,10 @@ replace_once('ai-board.js',
 '''    undoSemantic,\n    exportState,''',
 '''    undoSemantic,\n    redoSemantic,\n    canUndoSemantic,\n    canRedoSemantic,\n    exportState,''')
 
-# Add redo button next to undo.
 replace_once('index.html',
 '''        </button>\n        <button\n          id="clear"''',
 '''        </button>\n        <button id="redo" class="icon-btn" title="Redo" aria-label="Redo" disabled>\n          <svg viewBox="0 0 24 24" aria-hidden="true">\n            <path d="m15 7 5 5-5 5M19 12h-8a6 6 0 0 0-6 6" />\n          </svg>\n        </button>\n        <button\n          id="clear"''')
 
-# Raw stroke redo stack, persisted per page.
 replace_once('app.js',
 '''  strokes = [],\n  current = null,''',
 '''  strokes = [],\n  redoStrokes = [],\n  current = null,''')
@@ -59,21 +54,13 @@ replace_once('app.js',
 replace_once('app.js',
 '''document.querySelector("#clear").onclick = () => {\n  strokes = [];\n  current = null;\n  ai.clear();\n  redraw();\n};\ndocument.querySelector("#undo").onclick = () => {\n  ai.cancelPending();\n  if (strokes.length) {\n    strokes.pop();\n    redraw();\n  } else if (!ai.undoSemantic()) redraw();\n};''',
 '''const undoButton = document.querySelector("#undo"),\n  redoButton = document.querySelector("#redo");\nfunction refreshHistoryControls() {\n  redoButton.disabled = !redoStrokes.length && !ai.canRedoSemantic();\n}\ndocument.querySelector("#clear").onclick = () => {\n  strokes = [];\n  redoStrokes = [];\n  current = null;\n  ai.clear();\n  redraw();\n  refreshHistoryControls();\n};\nundoButton.onclick = () => {\n  ai.cancelPending();\n  if (strokes.length) {\n    redoStrokes.push(strokes.pop());\n    redraw();\n  } else if (!ai.undoSemantic()) redraw();\n  refreshHistoryControls();\n};\nredoButton.onclick = () => {\n  ai.cancelPending();\n  if (redoStrokes.length) {\n    strokes.push(redoStrokes.pop());\n    redraw();\n  } else if (!ai.redoSemantic()) redraw();\n  refreshHistoryControls();\n};\nrefreshHistoryControls();''')
-# New raw stroke invalidates raw redo branch.
 replace_once('app.js',
 '''  if (current?.points.length > 1) {\n    strokes.push(current);''',
 '''  if (current?.points.length > 1) {\n    redoStrokes = [];\n    strokes.push(current);''')
-replace_once('app.js',
-'''    ai.schedule();\n  }''',
-'''    ai.schedule();\n    refreshHistoryControls();\n  }''')
 
-# Disabled state should read as inactive.
 replace_once('styles.css',
 '''.icon-btn.active {\n  background: #fff;\n  color: #0b0c0f;\n}''',
 '''.icon-btn.active {\n  background: #fff;\n  color: #0b0c0f;\n}\n.icon-btn:disabled {\n  opacity: 0.25;\n  cursor: default;\n  pointer-events: none;\n}''')
-
-# Bump PWA cache.
 replace_once('sw.js', 'const CACHE = "airboard-v29";', 'const CACHE = "airboard-v30";')
 
-# Coverage for requested behavior.
 Path('tests/board-pages-redo.test.js').write_text('''import test from "node:test";\nimport assert from "node:assert/strict";\nimport { readFile } from "node:fs/promises";\n\ntest("selecting another page does not immediately open its menu", async () => {\n  const source = await readFile(new URL("../board-pages.js", import.meta.url), "utf8");\n  assert.match(source, /book = selectPage\\(book, id\\);\\s*expandedId = null;/);\n  assert.match(source, /if \\(id === book\\.activeId\\)[\\s\\S]*expandedId = expandedId === id \\? null : id/);\n});\n\ntest("redo is page-local and available only after undo", async () => {\n  const [app, ai, html] = await Promise.all([\n    readFile(new URL("../app.js", import.meta.url), "utf8"),\n    readFile(new URL("../ai-board.js", import.meta.url), "utf8"),\n    readFile(new URL("../index.html", import.meta.url), "utf8"),\n  ]);\n  assert.match(html, /id="redo"[\\s\\S]*disabled/);\n  assert.match(app, /redoStrokes: structuredClone\\(redoStrokes\\)/);\n  assert.match(app, /redoStrokes = structuredClone\\(state\\?\\.redoStrokes \\|\\| \\[\\]\\)/);\n  assert.match(app, /redoButton\\.disabled = !redoStrokes\\.length && !ai\\.canRedoSemantic\\(\\)/);\n  assert.match(ai, /redoHistory: clone\\(redoHistory\\)/);\n  assert.match(ai, /function redoSemantic\\(\\)/);\n});\n''')
