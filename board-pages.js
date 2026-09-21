@@ -11,6 +11,73 @@ export const MAX_BOARD_PAGES = 12;
 const clone = (value) => structuredClone(value);
 const cleanTitle = (value, fallback) => String(value ?? "").trim().slice(0, 48) || fallback;
 
+function installCompactModeSwitch() {
+  const utility = document.querySelector(".utility-switch"),
+    source = document.querySelector(".tool-dock");
+  if (!utility || !source || utility.querySelector("#modeCycle")) return;
+
+  const buttons = [...source.querySelectorAll(".mode-btn")],
+    order = ["free", "pointer", "pen", "eraser"];
+  if (!buttons.length) return;
+
+  source.classList.add("mode-dock-source");
+  utility.classList.add("mode-switch-installed");
+
+  const cycle = document.createElement("button");
+  cycle.type = "button";
+  cycle.id = "modeCycle";
+  cycle.className = "icon-btn mode-cycle";
+  cycle.setAttribute("aria-live", "polite");
+  const mark = document.createElement("span");
+  mark.className = "mode-cycle-mark";
+  mark.setAttribute("aria-hidden", "true");
+  cycle.append(mark);
+
+  const divider = document.createElement("span");
+  divider.className = "divider mode-cycle-divider";
+  divider.setAttribute("aria-hidden", "true");
+  utility.prepend(divider);
+  utility.prepend(cycle);
+
+  function modeLabel(mode) {
+    const it = document.documentElement.lang === "it";
+    const labels = it
+      ? { free: "Libero", pointer: "Puntatore", pen: "Penna", eraser: "Gomma" }
+      : { free: "Free", pointer: "Pointer", pen: "Pen", eraser: "Eraser" };
+    return labels[mode] || labels.pointer;
+  }
+
+  function sync() {
+    const active = buttons.find((button) => button.classList.contains("active")) ||
+      buttons.find((button) => button.dataset.mode === "pointer") ||
+      buttons[0];
+    const mode = active?.dataset.mode || "pointer";
+    cycle.dataset.mode = mode;
+    const label = modeLabel(mode),
+      hint = document.documentElement.lang === "it" ? "Tocca per cambiare modalità" : "Tap to switch mode";
+    cycle.title = `${label} · ${hint}`;
+    cycle.ariaLabel = `${label}. ${hint}`;
+  }
+
+  cycle.onclick = () => {
+    const current = cycle.dataset.mode || "pointer",
+      next = order[(order.indexOf(current) + 1) % order.length],
+      target = buttons.find((button) => button.dataset.mode === next);
+    target?.click();
+    queueMicrotask(sync);
+  };
+
+  const observer = new MutationObserver(sync);
+  buttons.forEach((button) =>
+    observer.observe(button, { attributes: true, attributeFilter: ["class"] }),
+  );
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["lang"],
+  });
+  sync();
+}
+
 export function createBoardBook(initialState = {}) {
   return {
     activeId: "page-1",
@@ -123,6 +190,8 @@ export function createBoardPagesController({
   beforePageChange = () => {},
   labels = {},
 }) {
+  installCompactModeSwitch();
+
   const text = {
     pages: labels.pages || "Pages",
     add: labels.add || "New page",
