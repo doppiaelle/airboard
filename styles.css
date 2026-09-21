@@ -333,6 +333,9 @@ video {
   opacity: 0.4;
   cursor: default;
 }
+.sidebar-action + .sidebar-action {
+  margin-top: 8px;
+}
 .session-start {
   display: flex;
   align-items: center;
@@ -776,8 +779,10 @@ body:has(.panel:not([hidden])) .ai-state {
   white-space: nowrap;
 }
 .calibration-dialog {
-  width: min(92vw, 460px);
+  width: min(94vw, 560px);
+  max-height: calc(100dvh - 24px);
   padding: 0;
+  overflow: auto;
   border: 1px solid #ffffff24;
   border-radius: 26px;
   background: #111318ee;
@@ -820,6 +825,220 @@ body:has(.panel:not([hidden])) .ai-state {
   margin: 0;
   color: #ffffffa1;
   line-height: 1.5;
+}
+.calibration-step-visual {
+  display: grid;
+  height: 180px;
+  margin-top: 18px;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid #ffffff12;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 45%, #9be7ff13, transparent 48%), #08090c80;
+}
+.calibration-step-visual[hidden] {
+  display: none !important;
+}
+gesture-illustration {
+  position: relative;
+  display: block;
+  overflow: visible;
+}
+.calibration-step-visual gesture-illustration {
+  width: min(82%, 270px);
+  height: 170px;
+}
+.gesture-hand-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 8px 14px #0007);
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+.gesture-motion-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.gesture-cue-dot {
+  fill: #9be7ff1c;
+  stroke: #9be7ff;
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.gesture-cue {
+  fill: none;
+  stroke: #9be7ff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+.pointer-target,
+.write-target,
+.release-target {
+  animation: gesture-pulse 1.4s ease-in-out infinite;
+}
+.pointer-cue {
+  animation: pointer-cue 1.8s ease-in-out infinite;
+}
+.write-cue-top {
+  animation: write-cue-top 1.6s ease-in-out infinite;
+}
+.write-cue-bottom {
+  animation: write-cue-bottom 1.6s ease-in-out infinite;
+}
+.release-arc {
+  stroke-dasharray: 8 6;
+  animation: release-arc 1.8s linear infinite;
+}
+.erase-cue {
+  stroke-dasharray: 5 6;
+  animation: erase-cue 1.8s ease-in-out infinite;
+}
+.gesture-recap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 18px;
+}
+.gesture-recap[hidden] {
+  display: none;
+}
+.gesture-recap article {
+  display: grid;
+  min-width: 0;
+  padding: 10px;
+  place-items: center;
+  border: 1px solid #ffffff10;
+  border-radius: 15px;
+  background: #08090c80;
+  text-align: center;
+}
+.gesture-recap gesture-illustration {
+  width: 100%;
+  height: 86px;
+}
+.gesture-recap strong {
+  margin-top: -3px;
+  font-size: 12px;
+}
+.gesture-recap span {
+  min-height: 28px;
+  margin-top: 3px;
+  color: #ffffff70;
+  font-size: 9px;
+  line-height: 1.35;
+}
+@keyframes gesture-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes pointer-cue {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateX(-5px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(5px);
+  }
+}
+@keyframes write-cue-top {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translate(-5px, -5px);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@keyframes write-cue-bottom {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translate(-5px, 5px);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@keyframes release-arc {
+  from {
+    stroke-dashoffset: 28;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes erase-cue {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateX(-3px);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translateX(3px);
+  }
+}
+.calibration-dialog[data-view="recap"] .calibration-card {
+  padding-block: clamp(16px, 2.6dvh, 26px);
+}
+.calibration-dialog[data-view="recap"] .calibration-progress {
+  margin-bottom: clamp(12px, 2dvh, 22px);
+}
+.calibration-dialog[data-view="recap"] h2 {
+  margin-block: 6px;
+  font-size: clamp(24px, 4dvh, 30px);
+}
+.calibration-dialog[data-view="recap"] .calibration-card > p {
+  min-height: 0;
+  font-size: clamp(12px, 1.8dvh, 15px);
+  line-height: 1.4;
+}
+.calibration-dialog[data-view="recap"] .gesture-recap {
+  gap: clamp(5px, 1dvh, 9px);
+  margin-top: clamp(8px, 1.4dvh, 16px);
+}
+.calibration-dialog[data-view="recap"] .gesture-recap article {
+  padding: clamp(5px, 1dvh, 9px);
+}
+.calibration-dialog[data-view="recap"] .gesture-recap gesture-illustration {
+  height: clamp(50px, 10dvh, 78px);
+}
+.calibration-dialog[data-view="recap"] .gesture-recap span {
+  min-height: 22px;
+}
+.calibration-dialog[data-view="recap"] .calibration-meter {
+  margin-top: clamp(9px, 1.5dvh, 18px);
+}
+.calibration-dialog[data-view="recap"] .calibration-feedback {
+  min-height: 14px;
+  margin-top: 5px;
+}
+.calibration-dialog[data-view="recap"] .calibration-actions {
+  margin-top: clamp(9px, 1.5dvh, 16px);
 }
 .calibration-meter {
   height: 5px;
@@ -916,6 +1135,18 @@ body:has(.panel:not([hidden])) .ai-state {
   }
   .recap-actions button {
     width: 100%;
+  }
+  .calibration-card {
+    padding: 24px 20px;
+  }
+  .calibration-step-visual {
+    height: 150px;
+  }
+  .calibration-step-visual gesture-illustration {
+    height: 145px;
+  }
+  .gesture-recap gesture-illustration {
+    height: 70px;
   }
   .mode-btn {
     flex: 1;

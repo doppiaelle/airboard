@@ -34,12 +34,34 @@ test("calibration and semantic correction controls ship together", async () => {
   );
   for (const id of [
     "calibrationCoach",
+    "calibrationStepVisual",
+    "calibrationGestureRecap",
     "recalibrate",
+    "gestureGuide",
     "semanticControls",
     "semanticEditor",
     "semanticDelete",
   ])
     assert.match(html, new RegExp(`id="${id}"`));
+});
+
+test("visual calibration includes every gesture illustration", async () => {
+  const [html, illustrations, accessibility, styles] = await Promise.all([
+    readFile(new URL("../index.html", import.meta.url), "utf8"),
+    readFile(new URL("../gesture-illustrations.js", import.meta.url), "utf8"),
+    readFile(new URL("../accessibility.css", import.meta.url), "utf8"),
+    readFile(new URL("../styles.css", import.meta.url), "utf8"),
+  ]);
+  for (const gesture of ["pointer", "write", "release", "erase"]) {
+    assert.match(html, new RegExp(`gesture="${gesture}"`));
+    assert.match(illustrations, new RegExp(`${gesture}:`));
+  }
+  assert.match(accessibility, /prefers-reduced-motion:\s*reduce/);
+  assert.match(illustrations, /src="\.\/assets\/gesture-\$\{gesture\}\.png"/);
+  assert.match(styles, /\.gesture-hand-art[\s\S]{0,240}?height:\s*100%/);
+  assert.match(styles, /object-fit:\s*contain/);
+  assert.match(styles, /calibration-step-visual\[hidden\]/);
+  assert.match(styles, /max-height:\s*calc\(100dvh/);
 });
 
 test("Pages workflow supports an explicitly selected preview branch", async () => {
