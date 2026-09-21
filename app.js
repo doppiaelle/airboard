@@ -20,6 +20,7 @@ import {
   sessionReportHtml,
 } from "./session-mode.js";
 import { listSessions, saveSession } from "./session-store.js";
+import { createBoardPagesController } from "./board-pages.js";
 const video = document.querySelector("#camera"),
   ink = document.querySelector("#ink"),
   semantic = document.querySelector("#semantic"),
@@ -65,7 +66,8 @@ let landmarker,
   selectedSemanticId = null,
   activeSession = null,
   recapSession = null,
-  sessionTimerHandle = null;
+  sessionTimerHandle = null,
+  boardPagesController = null;
 const CALIBRATION_KEY = "airboard-calibration-v1",
   CALIBRATION_SKIP_KEY = "airboard-calibration-skipped-v1";
 let calibrationProfile = loadCalibrationProfile(),
@@ -172,6 +174,14 @@ const I = {
     recentSessions: "Recent sessions",
     recentEmpty: "Completed sessions will appear here.",
     sessionSaved: "Session saved locally",
+    pages: "Pages",
+    newPage: "New page",
+    renamePage: "Rename page",
+    duplicatePage: "Duplicate page",
+    deletePage: "Delete page",
+    movePageLeft: "Move page left",
+    movePageRight: "Move page right",
+    pageNamePrompt: "Page name",
   },
   it: {
     heroTitle: "Scrivi nello spazio.",
@@ -261,6 +271,14 @@ const I = {
     recentSessions: "Sessioni recenti",
     recentEmpty: "Le sessioni concluse compariranno qui.",
     sessionSaved: "Sessione salvata localmente",
+    pages: "Pagine",
+    newPage: "Nuova pagina",
+    renamePage: "Rinomina pagina",
+    duplicatePage: "Duplica pagina",
+    deletePage: "Elimina pagina",
+    movePageLeft: "Sposta pagina a sinistra",
+    movePageRight: "Sposta pagina a destra",
+    pageNamePrompt: "Nome pagina",
   },
 };
 const t = (k) => I[lang][k] || k,
@@ -358,6 +376,42 @@ document.querySelector("#aiBoard").onclick = (e) => {
   syncDomainAvailability();
 };
 renderDomain();
+
+function boardPageLabels() {
+  return {
+    pages: t("pages"),
+    add: t("newPage"),
+    rename: t("renamePage"),
+    duplicate: t("duplicatePage"),
+    delete: t("deletePage"),
+    moveLeft: t("movePageLeft"),
+    moveRight: t("movePageRight"),
+    namePrompt: t("pageNamePrompt"),
+  };
+}
+
+boardPagesController = createBoardPagesController({
+  getState: () => ({
+    strokes: structuredClone(strokes),
+    aiState: ai.exportState(),
+  }),
+  setState: (state) => {
+    settleCurrentStroke();
+    ai.cancelPending();
+    strokes = structuredClone(state?.strokes || []);
+    current = null;
+    penDown = false;
+    closeSemanticEditor();
+    ai.importState(state?.aiState);
+    recognitionDomain = ai.getDomain();
+    renderDomain();
+    redraw();
+  },
+  capturePreview: () => captureBoard("image/jpeg", 0.68, 360),
+  beforePageChange: settleCurrentStroke,
+  labels: boardPageLabels(),
+});
+
 domainBtn.onclick = () => {
   if (!ai.isEnabled()) return;
   domainBtn.classList.remove("active");
@@ -384,6 +438,7 @@ function applyLanguage() {
   renderCalibrationStep();
   refreshUI();
   refreshRecentSessions();
+  boardPagesController?.setLabels(boardPageLabels());
 }
 document.querySelector("#language").onclick = () => {
   lang = lang === "en" ? "it" : "en";
@@ -692,11 +747,13 @@ function updateSessionBar() {
 }
 
 function currentBoardSummary() {
-  const semanticSummary = ai.getSessionSummary();
+  const semanticSummary = ai.getSessionSummary(),
+    pages = boardPagesController?.getBook().pages || [];
   return {
     strokeCount: strokes.length + (current?.points?.length > 1 ? 1 : 0),
     semanticCount: semanticSummary.semanticCount,
     recognizedText: semanticSummary.recognizedText,
+    pageCount: pages.length || 1,
   };
 }
 
@@ -814,6 +871,7 @@ document.querySelector("#sessionEnd").onclick = async () => {
   const finished = finishSession(activeSession, {
     finalBoard: captureBoard("image/png", 0.92, 1600),
     boardSummary: currentBoardSummary(),
+    boardPages: boardPagesController?.exportPages() || [],
   });
   clearInterval(sessionTimerHandle);
   sessionTimerHandle = null;
@@ -1100,6 +1158,7 @@ function redraw() {
   ictx.clearRect(0, 0, ink.clientWidth, ink.clientHeight);
   strokes.forEach((s) => drawStroke(ictx, s));
   if (current) drawStroke(ictx, current);
+  boardPagesController?.scheduleCurrentSnapshot();
 }
 function commitStroke() {
   if (current?.points.length > 1) {

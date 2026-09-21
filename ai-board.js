@@ -183,7 +183,8 @@ export function createAIBoard({
       H = semantic.clientHeight,
       left = Math.max(30, W * 0.055),
       right = Math.max(30, W * 0.055),
-      top = Math.max(48, H * 0.1),
+      compact = window.matchMedia?.("(max-width: 720px)")?.matches ?? W <= 720,
+      top = compact ? Math.max(136, H * 0.18) : Math.max(64, H * 0.11),
       font = Math.max(34, Math.min(54, W / 18)),
       line = Math.round(font * 1.5),
       gap = Math.round(font * 0.76),
@@ -691,6 +692,25 @@ export function createAIBoard({
     pendingStart = 0;
     render();
   }
+  function exportState() {
+    return {
+      elements: clone(elements),
+      history: clone(history),
+      pendingStart,
+      domain,
+    };
+  }
+  function importState(state) {
+    clearTimers();
+    invalidateAsync();
+    elements = clone(state?.elements || []);
+    history = clone(state?.history || []);
+    pendingStart = Math.max(0, Number(state?.pendingStart) || 0);
+    if (["math", "letters", "draw"].includes(state?.domain)) domain = state.domain;
+    pendingStart = Math.min(pendingStart, getStrokes().length);
+    render();
+    if (enabled) onState("ready");
+  }
   function getSessionSummary() {
     const confirmed = elements.filter((element) => element.confirmed);
     return {
@@ -721,6 +741,8 @@ export function createAIBoard({
     deleteElement,
     cancelPending,
     undoSemantic,
+    exportState,
+    importState,
     getSessionSummary,
     clear,
     resize: render,
